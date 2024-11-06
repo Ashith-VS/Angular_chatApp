@@ -1,0 +1,127 @@
+<div class="vh-100">
+    <div class="row border">
+        <div class="col-3 vh-100 ">
+            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary">
+
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <span class="fs-5 fw-semibold">Chat App</span>
+                    <div class="d-flex align-items-center  position-relative">
+                        <img src="./assets/icons/group.png" alt="Group icon" class="img me-2"
+                            (click)="handleNavigate('new')" />
+                        <img src="./assets/icons/more_icon.png" alt="More options icon" class="img"
+                            (click)="showDropdown()" />
+                        @if (isDropdownVisible) {
+                        <div class="dropdown-menu p-2">
+                            <li class="dropdown-item" (click)="handleNavigate('profile')">Profile</li>
+                            <li class="dropdown-item" (click)="handleLogout($event)">Logout</li>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+
+                <!-- searchbar -->
+                <form class="m-2 p-2" (submit)="handleSearch($event)">
+                    <input type="text" [(ngModel)]="searchTerm" name="search" class="form-control"
+                        placeholder="Search...">
+                </form>
+
+
+                <div class="list-group list-group-flush border-bottom scrollable-area">
+                    @if (searchUsers.length>0) {
+                    <!-- search list -->
+                    <span>Contacts:</span>
+                    @for (item of searchUsers; track $index) {
+                    <div (click)="handleSelectUser(item?._id)"
+                        class="list-group-item list-group-item-action  py-3 lh-sm" aria-current="true">
+                        <div class="d-flex w-100 align-items-center ">
+                            <img src="{{item.avatar}}" alt="{{item.username}}'s avatar" class="rounded-circle"
+                                style="width: 40px; height: 40px; margin-right: 10px;" />
+                            <div class="flex-grow-1 ">
+                                <strong class="mb-1">{{item.username}}</strong>
+                                <small class="ms-4">Wed</small>
+                                <div class="col-10 mb-1 small">last message</div>
+                            </div>
+                        </div>
+                    </div>
+                    }@empty{
+                    <p>No contacts found</p>
+                    }
+                    }
+
+                    <!-- contact list -->
+                    <span>Chats:</span>
+                    @for (chat of chats; track $index) {
+                    <div class="list-group-item list-group-item-action  py-3 lh-sm " aria-current="true"
+                        [class]="{'selected-chat': chat?._id === selectedChat?._id}" (click)="handleSelectChat(chat)">
+                        <div class="d-flex w-100 align-items-center justify-between ">
+                            <strong class="mb-1">{{chat.isGroupChat?
+                                chat?.chatName:getSender(currentUser,chat?.users)}}</strong>
+                        </div>
+                        <div class="col-10 mb-1 small">last message</div>
+                    </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-9 border">
+
+            <div id="head" class="py-3 lh-sm border-bottom">
+                @if (selectedChat) {
+                <strong
+                    class="mb-1">{{selectedChat.isGroupChat?selectedChat.chatName:getSender(currentUser,selectedChat.users)}}</strong>
+                }
+            </div>
+
+
+
+            <div id="conversation">
+                @if (selectedChat) {
+                @for (msg of messages; track $index) {
+
+                <div class="row pt-2"
+                    [ngClass]="{'justify-content-start': msg?.sender?._id !== currentUser._id, 'justify-content-end': msg?.sender?._id === currentUser._id}">
+                    <div class="col-12">
+                        <div class="d-flex" [ngClass]="{'flex-row-reverse': msg?.sender?._id === currentUser._id}">
+
+                            <div class="alert"
+                                [ngClass]="{'alert-primary': msg?.sender?._id !== currentUser._id, 'alert-secondary': msg?.sender?._id === currentUser._id}">
+                                @if (msg?.chat?.isGroupChat && msg?.sender?._id !== currentUser._id) {
+                                <span class="mb-2">{{msg?.sender?.username}} :</span>
+                                <br>
+                                }
+                                {{ msg?.content }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Add the scroll target element -->
+                <div #endRef ></div>
+                }
+                }@else {
+                <div class="d-flex vh-100 justify-content-center align-items-center">
+                    <p>Select a chat to start messaging</p>
+                </div>
+                }
+            </div>
+
+
+
+            @if (selectedChat) {
+            <form [formGroup]="form" id="reply" class="p-3 w-100" (submit)="handleSubmit()">
+                <div class="input-group">
+                    <input type="text" formControlName="message" class="form-control p-2" placeholder="Type a message...">
+                </div>
+            </form>
+            }
+
+
+
+        </div>
+
+
+    </div>
+</div>

@@ -1,0 +1,30 @@
+<div class="center-container">
+    <div class="login-container">
+        <h1>Login</h1>
+        @if (errorObjArr().length>0) {
+        <ul class="error-message">
+            @for (item of errorObjArr(); track $index) {
+            <li (click)="focusInput(item)" class="error" style="color: red; text-decoration: none;">{{errorObj[item]}}</li>
+            }
+        </ul>
+        }
+
+        <form [formGroup]="loginForm" (submit)="handleSubmit($event)">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" formControlName="email" id="email" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" formControlName="password" id="password" required class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <p>
+            Don't have an account?
+            <a routerLink="/register">Register</a>
+        </p>
+    </div>
+</div>

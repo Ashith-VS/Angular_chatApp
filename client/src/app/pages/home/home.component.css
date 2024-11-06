@@ -1,0 +1,47 @@
+.scrollable-area {
+    max-height: 750px; /* Adjust this height as needed */
+    overflow-y: auto;
+}
+
+.selected-chat {
+    background-color: #e0f7fa; /* Light blue or any preferred color */
+    color: #006064; /* Dark text color for contrast */
+  }
+
+  .img{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  
+  .dropdown-menu {
+    display: block; /* Ensure visibility */
+    position: absolute; /* Ensure it positions relative to parent */
+    top: 100%; /* Adjust positioning if needed */
+    left: 0;   /* Adjust positioning if needed */
+    z-index: 1000; /* Ensure it appears above other elements */
+    background-color: #fff; /* Background color for visibility */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+    padding: 3px; /* Padding for spacing */
+    border-radius: 4px; /* Rounded corners */
+}
+
+.parent-container {
+    overflow: visible; /* Ensures dropdown isn't clipped */
+}
+
+/* Hide scrollbar in Webkit-based browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+* {
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Internet Explorer and Edge */
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+}
