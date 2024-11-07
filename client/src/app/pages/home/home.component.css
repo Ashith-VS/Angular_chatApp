@@ -1,7 +1,4 @@
 .center-container {
-  /* display: flex; */
-  /* justify-content: center; */
-  /* align-items: center; */
   max-height: 100vh; /* Full viewport height */
   width: 100%;
   background-color: #f0f2f5; /* Light background color */
@@ -9,18 +6,24 @@
 }
 
 .scrollable-area {
-    max-height: 750px; /* Adjust this height as needed */
+    max-height: 100%; /* Adjust this height as needed */
     overflow-y: auto;
 }
 .chat-area{
   min-height: 100%;
-
 }
 
-.selected-chat {
-    background-color: #e0f7fa; /* Light blue or any preferred color */
-    color: #006064; /* Dark text color for contrast */
+  .selected-chat {
+    background-color: #b2ebf2; /* Lighter blue on hover */
+    color: #004d40; /* Darker text color on hover */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
   }
+  
+  .selected-chat:hover {
+    background-color: #e0f7fa; /* Light blue */
+    color: #006064; /* Dark text color */
+}
+
 
   .img{
     width: 30px;
@@ -33,12 +36,19 @@
     display: block; /* Ensure visibility */
     position: absolute; /* Ensure it positions relative to parent */
     top: 100%; /* Adjust positioning if needed */
-    left: 0;   /* Adjust positioning if needed */
+    left: 0; /* Adjust positioning if needed */
     z-index: 1000; /* Ensure it appears above other elements */
     background-color: #fff; /* Background color for visibility */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
-    padding: 3px; /* Padding for spacing */
     border-radius: 4px; /* Rounded corners */
+    width: auto; /* Set width to auto to avoid stretching */
+    min-width: 150px; /* Set a minimum width if you want it to be slightly wider */
+  }
+  
+  .dropdown-item {
+  border-radius: 15px;
+    white-space: nowrap; /* Ensure the text doesn't wrap and breaks lines */
+    font-size: 14px; /* Optional: Adjust the font size to suit the dropdown width */
 }
 
 .parent-container {
@@ -59,3 +69,4 @@
 * {
   -ms-overflow-style: none; /* IE and Edge */
 }
+

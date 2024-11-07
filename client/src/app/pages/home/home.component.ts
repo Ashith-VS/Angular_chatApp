@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { ApilistService } from '../../services/apilist.service';
 import { chatModel, User, userModel, userSearchModel } from '../../models/user.model';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { SocketService } from '../../services/socket.service';
 
 @Component({
@@ -29,10 +29,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   groupChatName:string=''
   search:string=''
   searchResults:any=[];
+  openUserModal:boolean = false
  
 
 
-  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef){
+  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location){
     this.form= this.fb.group({
       message:""
     })
@@ -44,9 +45,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
       this.currentUser=res.user
       this.socketService.sendCurrentUser(this.currentUser)
     })
-    this.homeService.getAllChats().subscribe((res=>{
-      this.chats=res.chats
-    }))
+    this.fetchAllChats()
+    // this.homeService.getAllChats().subscribe((res=>{
+    //   this.chats=res.chats
+    // }))
 
     this.socketService.getMessages().subscribe((msg)=>{
       // console.log("received message: ", msg);
@@ -56,6 +58,12 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     })
 
     // console.log('this.form.value.message: ', this?.form?.value?.message);
+  }
+
+  fetchAllChats(): void {
+    this.homeService.getAllChats().subscribe((res)=>{
+      this.chats=res.chats
+    })
   }
 
   scrollToBottom(): void {
@@ -94,6 +102,8 @@ handleSearch(e:Event){
   // console.log("Searching for:", this.searchTerm);
   this.homeService.getUsersBySearch(this.searchTerm).subscribe((res:userSearchModel)=>{
     this.searchUsers=res.users;
+    console.log('res.users: ', res.users);
+
   })
 }
 
@@ -130,6 +140,15 @@ getSender(currentuser:any,users:any){
   return  user.username
 }
 
+getSenderfullDetail(currentuser:any,users:any){
+  const user=users.find((user:any)=>user._id !== currentuser._id)
+  return {
+    name:user.username,
+    email:user.email,
+    avatar:user.avatar
+  }
+}
+
 
 handleLogout(e:Event){
   e.preventDefault();
@@ -146,9 +165,13 @@ handleNavigate(route:string):void{
   this.router.navigate([route]);
 }
 
+handleNavigateBack(): void {
+  this.location.back();
+}
+
 handleOpenModal(){
   this.openModal =!this.openModal;
-  console.log('this.openModal: ', this.openModal);
+  // console.log('this.openModal: ', this.openModal);
 }
 
 handleCloseModal(){
@@ -201,7 +224,7 @@ handleRename(){
 
 handleRemove(user:any){
   console.log('user: ', user);
-  if(this.selectedChat.groupAdmin._id !== this.currentUser._id && user._id !== this.currentUser._id){
+  if(this.selectedChat?.groupAdmin?._id !== this.currentUser._id && user._id !== this.currentUser._id){
     alert('Only group admin can remove users');
     return
   }
@@ -212,21 +235,34 @@ handleRemove(user:any){
   console.log('data: ', data);
   this.homeService.leaveGroupChat(data).subscribe(res=>{
     console.log('leaveGroupChat: ', res.chat);
+
     // this.selectedChat=res.chat;
     user?._id === this.currentUser._id ?this.selectedChat={}:this.selectedChat(res.chat)
-    console.log('this.selectedChat: ', this.selectedChat);
-    this.fetchAllMessages()
+    // console.log('this.selectedChat: ', this.selectedChat);
     // this.selectedChat = {}
+    this.openModal=false
+    this.fetchAllChats()
   })
-
 }
 
-handleLeaveGroup(){
- 
+
+
+
+
+
+
+
+
+handleShowUserModal(){
+  console.log("showUserModal")
+  this.openUserModal =!this.openUserModal;
+}
+
+handleCloseUserModal(){
+  this.openUserModal = false;
+}
   
 
 
-}
-  
 
 }

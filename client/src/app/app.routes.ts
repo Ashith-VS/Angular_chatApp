@@ -7,9 +7,9 @@ import { NewGroupModalComponent } from './pages/new-group-modal/new-group-modal.
 
 export const routes: Routes = [
     {path:"", redirectTo:"login", pathMatch:"full"},
-    {path:"home", component: HomeComponent,title:'home'},
     {path:"login", component:LoginComponent,title:'Login'},
     {path:"register", component:RegisterComponent,title:'Register'},
+    {path:"home", component: HomeComponent,title:'home'},
     {path:"profile", component:ProfileModalComponent,title:'Profile'},
     {path:"new", component:NewGroupModalComponent,title:''},
     {path:"**", redirectTo:"login", pathMatch:"full"},

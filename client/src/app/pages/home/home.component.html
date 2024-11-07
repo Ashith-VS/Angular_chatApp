@@ -2,7 +2,7 @@
     <div class="row border">
 
         <div class="col-3 vh-100 ">
-            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary p-4">
+            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary p-4" style="height: 100%;">
 
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
                     <span class="fs-5 fw-semibold">Chat App</span>
@@ -12,7 +12,7 @@
                         <img src="./assets/icons/more_icon.png" alt="More options icon" class="img"
                             (click)="showDropdown()" />
                         @if (isDropdownVisible) {
-                        <div class="dropdown-menu p-2">
+                        <div class="dropdown-menu ">
                             <li class="dropdown-item" (click)="handleNavigate('profile')">Profile</li>
                             <li class="dropdown-item" (click)="handleLogout($event)">Logout</li>
                         </div>
@@ -23,7 +23,7 @@
 
                 <!-- searchbar -->
                 <form class="m-2 p-2" (submit)="handleSearch($event)">
-                    <input type="text" [(ngModel)]="searchTerm" name="search" class="form-control"
+                    <input type="text" [(ngModel)]="searchTerm" name="search" (input)="handleSearch($event)" class="form-control"
                         placeholder="Search...">
                 </form>
 
@@ -68,17 +68,18 @@
         </div>
 
 
-        <div class="col-9 border pb-5">
+        <div class="col-9 border pb-5" style="background-color: #f4f4f4;">
 
-            <div id="head" class="py-2 lh-sm border-bottom">
+            <div id="head" class="py-2 lh-sm border-bottom ">
                 @if (selectedChat) {
+                    <img src="./assets/icons/back.png" alt="" class="img me-2" (click)="handleNavigate('home')">
                 <strong
                     class="mb-1">{{selectedChat.isGroupChat?selectedChat.chatName:getSender(currentUser,selectedChat.users)}}</strong>
-                @if (selectedChat?.isGroupChat) {
+                
                 <img src="./assets/icons/info.png" alt="" class="img" style="float: right;background-color: black;"
-                    (click)="handleOpenModal()">
+                    (click)="(selectedChat?.isGroupChat ? handleOpenModal() : handleShowUserModal())">
                 }
-                }
+                
             </div>
 
             <div #scrollableDiv id="conversation" class="px-3">
@@ -119,16 +120,15 @@
             }
 
 
-
         </div>
 
 
 
 
-        <!-- Modal -->
+        <!-- Modal groupchat -->
         @if (openModal) {
         <div [class]="(openModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
-            aria-labelledby="exampleModalLabel" aria-hidden="true"
+            aria-labelledby="exampleModalLabel" 
             style="display: block;background: rgba(0, 0, 0, 0.5);">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -179,8 +179,35 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" (click)="handleRemove(currentUser)">Leave
                             Group</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Modal showUser -->
+        @if (openUserModal) {
+        <div [class]="(openUserModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
+            aria-labelledby="exampleModalLabel"
+            style="display: block;background: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">About</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            (click)="handleCloseUserModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <img [src]="getSenderfullDetail(currentUser,selectedChat?.users).avatar" alt="Profile Avatar" class="rounded-circle img-thumbnail" style="width: 100px; height: 100px;" />
+                        </div>
+                        <h5 class="text-center">{{getSenderfullDetail(currentUser,selectedChat?.users).name}}</h5>
+                        <p class="text-muted text-center">{{getSenderfullDetail(currentUser,selectedChat?.users).email}}</p>
+                        <p class="text-muted text-center">Hello, I am using Chat App</p>
+                    </div>
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                            (click)="handleCloseModal()">Close</button>
+                            (click)="handleCloseUserModal()">Close</button>
                     </div>
                 </div>
             </div>

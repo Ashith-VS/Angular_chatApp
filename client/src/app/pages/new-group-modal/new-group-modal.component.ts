@@ -73,13 +73,14 @@ export class NewGroupModalComponent {
 
     this.groupService.createGroupChat(data).subscribe(res=>{
       console.log("groupchat44",res)
+      // Clear input field after creating the group
+    this.groupName = '';
+    this.selectedUsers = [];
+    this.search = '';
+    this.searchResults = [];
+    this.closeNewGroupModal();
     })
     
-    // Clear input field after creating the group
-    // this.groupName = '';
-    // this.selectedUsers = [];
-    // this.search = '';
-    // this.searchResults = [];
-    // this.closeNewGroupModal();
+    
   }
 }
