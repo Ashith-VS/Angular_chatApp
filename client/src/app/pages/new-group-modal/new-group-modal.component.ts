@@ -39,11 +39,13 @@ export class NewGroupModalComponent {
   }
 
   addUser(user:any){
-     if (!this.selectedUsers.some((selectedUser:any) => selectedUser._id === user._id)) {
-      this.selectedUsers.push(user);
+    if (!this.selectedUsers.some((selectedUser:any) => selectedUser._id === user._id)) {
+      
+      this.selectedUsers=[...this.selectedUsers,user]
+      console.log('this.selectedUsers1: ', this.selectedUsers);
+      
       // Remove the added user from the search results
       this.searchResults = this.searchResults.filter((u: any) => u._id !== user._id);
-      console.log('this.selectedUsers: ', this.selectedUsers);
     }
   }
   

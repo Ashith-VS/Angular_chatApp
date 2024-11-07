@@ -1,7 +1,8 @@
-<div class="vh-100">
+<div class="center-container">
     <div class="row border">
+
         <div class="col-3 vh-100 ">
-            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary">
+            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary p-4">
 
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
                     <span class="fs-5 fw-semibold">Chat App</span>
@@ -67,26 +68,26 @@
         </div>
 
 
-        <div class="col-9 border">
+        <div class="col-9 border pb-5">
 
-            <div id="head" class="py-3 lh-sm border-bottom">
+            <div id="head" class="py-2 lh-sm border-bottom">
                 @if (selectedChat) {
                 <strong
                     class="mb-1">{{selectedChat.isGroupChat?selectedChat.chatName:getSender(currentUser,selectedChat.users)}}</strong>
+                @if (selectedChat?.isGroupChat) {
+                <img src="./assets/icons/info.png" alt="" class="img" style="float: right;background-color: black;"
+                    (click)="handleOpenModal()">
+                }
                 }
             </div>
 
-
-
-            <div id="conversation">
+            <div #scrollableDiv id="conversation" class="px-3">
                 @if (selectedChat) {
                 @for (msg of messages; track $index) {
-
-                <div class="row pt-2"
+                <div class="row pt-2 "
                     [ngClass]="{'justify-content-start': msg?.sender?._id !== currentUser._id, 'justify-content-end': msg?.sender?._id === currentUser._id}">
                     <div class="col-12">
                         <div class="d-flex" [ngClass]="{'flex-row-reverse': msg?.sender?._id === currentUser._id}">
-
                             <div class="alert"
                                 [ngClass]="{'alert-primary': msg?.sender?._id !== currentUser._id, 'alert-secondary': msg?.sender?._id === currentUser._id}">
                                 @if (msg?.chat?.isGroupChat && msg?.sender?._id !== currentUser._id) {
@@ -98,11 +99,9 @@
                         </div>
                     </div>
                 </div>
-                <!-- Add the scroll target element -->
-                <div #endRef ></div>
                 }
                 }@else {
-                <div class="d-flex vh-100 justify-content-center align-items-center">
+                <div class="d-flex chat-area  justify-content-center align-items-center">
                     <p>Select a chat to start messaging</p>
                 </div>
                 }
@@ -113,7 +112,8 @@
             @if (selectedChat) {
             <form [formGroup]="form" id="reply" class="p-3 w-100" (submit)="handleSubmit()">
                 <div class="input-group">
-                    <input type="text" formControlName="message" class="form-control p-2" placeholder="Type a message...">
+                    <input type="text" formControlName="message" class="form-control p-2"
+                        placeholder="Type a message...">
                 </div>
             </form>
             }
@@ -121,6 +121,72 @@
 
 
         </div>
+
+
+
+
+        <!-- Modal -->
+        @if (openModal) {
+        <div [class]="(openModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
+            aria-labelledby="exampleModalLabel" aria-hidden="true"
+            style="display: block;background: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">{{selectedChat?.chatName}}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            (click)="handleCloseModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Chat Participants:</h6>
+                        <div class="user-badges">
+                            @for (user of selectedChat?.users; track $index) {
+                            <div class="badge bg-secondary m-2 p-3 position-relative">
+                                <span class="me-2">{{ user.username }}</span>
+                                <button type="button" class="btn-close position-absolute top-0 end-0 me-2 mt-1"
+                                    aria-label="Remove user" (click)="handleRemove(user)"></button>
+                            </div>}
+                        </div>
+                        <form>
+                            <div class="mt-2 mb-3 d-flex align-items-center">
+                                <input type="text" [(ngModel)]='groupChatName' name="groupChatName"
+                                    placeholder="Chat Name" class="form-control">
+                                <button type="button" class="btn btn-primary m-2"
+                                    (click)="handleRename()">Rename</button>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" [(ngModel)]="search" name="search" (input)="handleSearchUser()"
+                                    placeholder="Add User to Group" class="form-control">
+
+                            </div>
+
+                            <!-- Display search results -->
+                            @if (searchResults.length > 0) {
+                            <div>
+                                <ul class="list-group mb-3">
+                                    @for (user of searchResults; track $index) {
+                                    <li class="list-group-item bg-secondary">
+                                        {{user?.username }}
+                                        <button type="button" class="btn btn-sm btn-primary float-end"
+                                            (click)="handleAddUser(user)">Add</button>
+                                    </li>}
+                                </ul>
+                            </div>
+                            }
+
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" (click)="handleRemove(currentUser)">Leave
+                            Group</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                            (click)="handleCloseModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
 
 
     </div>

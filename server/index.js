@@ -31,22 +31,40 @@ const io = socketIo(server, {
 
 
 io.on('connection', (socket) => {
-    console.log("Connected to socket")
+    console.log("Connected to socket.io")
 
-    socket.on('message', (data) => {
-        console.log('message received', data)
-        io.emit('message', data);
+    socket.on('setup', (userData) => {
+        console.log('userData._id', userData._id)
+        socket.join(userData._id)
+        socket.emit('connected')
     })
 
-    socket.on('disconnect', () => {
-        console.log('user disconnected')
+    socket.on('joinChat', (room) => {
+        console.log('user joined room', room)
+        socket.join(room)
     });
+
+
+    socket.on('newMessage', (message) => {
+        //   console.log('message received', message)
+        if (!message.chat.users) return console.log('chat  user is not available')
+        // console.log('message.chat.users: ', message.chat.users);
+        message.chat.users.forEach(user => {
+            if (user._id == message.sender._id) return;
+            socket.in(user._id).emit('messageReceived', message)
+        })
+    })
+    // Handle client disconnection
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+
+    });
+
 })
 
 mongoose.connect(MONGO_URL)
     .then(() => {
         console.log('Connected to MongoDB');
-    
         server.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });

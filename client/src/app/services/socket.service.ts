@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { ApplicationRef, inject, Injectable } from '@angular/core';
+import { first, Observable } from 'rxjs';
 import {io, Socket} from 'socket.io-client'
 import { environment } from '../../environments/environment';
 
@@ -11,21 +11,47 @@ export class SocketService {
   private socket :Socket
 
   constructor() { 
-    this.socket =io(environment.API_URL, { autoConnect: false })
+    this.socket =io(environment.API_URL,{autoConnect:false})
+    inject(ApplicationRef).isStable.pipe(
+      first((isStable)=>isStable))
+      .subscribe(()=>{this.socket.connect()})
   }
 
 // Emit a message to the server
-  sendMessage(msg:any):void {
-    console.log('msg4466: ', msg);
-    this.socket.emit('message', msg)
+  sendCurrentUser(msg:any):void {
+    // console.log('user: ', msg);
+    this.socket.emit('setup', msg)
+  }
+  
+  joinRoom(roomId:any):void {
+    // console.log('roomId: ', roomId);
+    this.socket.emit('joinChat', roomId)
   }
 
-  // listen for messages from the server
+  sendMessage(msg:any):void {
+    // console.log('msg-value: ', msg);
+    this.socket.emit('newMessage', msg)
+  }
+
+
+
+  // // listen for messages from the server
   getMessages(): Observable<string> {
     return new Observable<string>(observer => {
-      this.socket.on('message', (data: any) => observer.next(data))
+      this.socket.on('messageReceived', (data: any) => observer.next(data))
     })
   }
-   
+
+
+  // Disconnect the client from the server
+  disconnect(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+      console.log('Socket disconnected');
+    }
+  }
   
+
+
+
 }

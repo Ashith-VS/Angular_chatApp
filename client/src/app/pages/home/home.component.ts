@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ApilistService } from '../../services/apilist.service';
 import { chatModel, User, userModel, userSearchModel } from '../../models/user.model';
@@ -13,7 +13,10 @@ import { SocketService } from '../../services/socket.service';
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, AfterViewChecked {
+  @ViewChild('scrollableDiv') scrollableDiv !: ElementRef;
+
+  
   form : FormGroup;
   messages:any=[]
   currentUser:userModel=new Object as userModel
@@ -22,34 +25,50 @@ export class HomeComponent implements OnInit {
   chats:chatModel[]=[]
   selectedChat:any;
   isDropdownVisible: boolean = false;
-  
+  openModal: boolean = false;
+  groupChatName:string=''
+  search:string=''
+  searchResults:any=[];
+ 
 
-  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService){
+
+  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef){
     this.form= this.fb.group({
       message:""
     })
   }
 
   ngOnInit(): void {
-
+    // window.scrollTo({ top: 1000, behavior: 'smooth' });
     this.homeService.isCurrrentUser().subscribe((res:any)=>{
       this.currentUser=res.user
+      this.socketService.sendCurrentUser(this.currentUser)
     })
     this.homeService.getAllChats().subscribe((res=>{
       this.chats=res.chats
     }))
 
     this.socketService.getMessages().subscribe((msg)=>{
-      console.log("received message: ", msg);
-      this.messages.push(msg);
+      // console.log("received message: ", msg);
+      this.messages.push(msg)
+      this.cdr.detectChanges();
+      // console.log('this.messages: ', this.messages);
     })
 
-    this.socketService.sendMessage(this.messages)
     // console.log('this.form.value.message: ', this?.form?.value?.message);
- 
-   
-    
   }
+
+  scrollToBottom(): void {
+    if (this.scrollableDiv) {
+      const element = this.scrollableDiv.nativeElement;
+      element.scrollTop = element.scrollHeight;
+    }
+  }
+
+ngAfterViewChecked(): void {
+    this.scrollToBottom()
+  }
+ 
 
 
 
@@ -62,10 +81,12 @@ handleSubmit(){
   }
   // console.log('data: ', data);
   this.homeService.sendMessages(data).subscribe(res=>{
-// console.log("sendMessages",res)
+console.log("sendMessages",res.message)
+this.socketService.sendMessage(res.message)
+this.messages=[...this.messages,res.message]
 this.form.get('message')?.setValue('')
   })
-  this.fetchAllMessages()
+  // this.fetchAllMessages()
 }
 
 handleSearch(e:Event){
@@ -100,7 +121,7 @@ fetchAllMessages(){
     this.messages=res.messages;
     // console.log('this.messages: ', this.messages);
   })
-
+  this.socketService.joinRoom(this.selectedChat._id)
 }
 
 
@@ -123,6 +144,88 @@ showDropdown(){
 
 handleNavigate(route:string):void{
   this.router.navigate([route]);
+}
+
+handleOpenModal(){
+  this.openModal =!this.openModal;
+  console.log('this.openModal: ', this.openModal);
+}
+
+handleCloseModal(){
+this.openModal=false;
+}
+
+handleSearchUser(){
+  if(!this.search)return
+  this.homeService.getUsersBySearch(this.search).subscribe(res=>{
+    // console.log('res: ', res.users);
+    this.searchResults=res.users;
+  })
+}
+
+handleAddUser(user:any){
+  if(this.selectedChat.users.find((u:any)=>u._id === user._id)){
+    alert('User already added');
+    return
+  }
+  if(this.selectedChat.groupAdmin._id !== this.currentUser._id){
+    alert('Only group admin can add users');
+    return
+  }
+  const data={
+    chatId: this.selectedChat._id,
+    userId: user._id
+  }
+  this.homeService.addUserToGroupChat(data).subscribe(res=>{
+    // console.log('addUserToGroupChat: ', res.chat);
+    this.selectedChat=res.chat;
+    // this.fetchAllMessages()
+  })
+
+}
+
+
+handleRename(){
+  if(!this.groupChatName)return
+  const data={
+    chatId: this.selectedChat._id,
+    chatName: this.groupChatName
+  }
+  this.homeService.renameGroupChat(data).subscribe(res=>{
+    // console.log('renameGroupChat: ', res.chat);
+    this.selectedChat=res.chat;
+    this.fetchAllMessages()
+    this.groupChatName=''
+  })
+}
+
+handleRemove(user:any){
+  console.log('user: ', user);
+  if(this.selectedChat.groupAdmin._id !== this.currentUser._id && user._id !== this.currentUser._id){
+    alert('Only group admin can remove users');
+    return
+  }
+  const data={
+    chatId: this.selectedChat._id,
+    userId: user._id,
+  }
+  console.log('data: ', data);
+  this.homeService.leaveGroupChat(data).subscribe(res=>{
+    console.log('leaveGroupChat: ', res.chat);
+    // this.selectedChat=res.chat;
+    user?._id === this.currentUser._id ?this.selectedChat={}:this.selectedChat(res.chat)
+    console.log('this.selectedChat: ', this.selectedChat);
+    this.fetchAllMessages()
+    // this.selectedChat = {}
+  })
+
+}
+
+handleLeaveGroup(){
+ 
+  
+
+
 }
   
 

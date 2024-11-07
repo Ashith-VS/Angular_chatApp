@@ -96,6 +96,7 @@ const CreateGroupChat = async (req, res) => {
 const RenameGroup = async (req, res) => {
     try {
         const { chatId, chatName } = req.body;
+        // console.log('req.body: ', req.body);
         if (!chatId || !chatName) {
             return res.status(400).json({ status: 400, message: 'Chat ID and new chat name are required' });
         }

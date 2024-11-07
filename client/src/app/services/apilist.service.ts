@@ -53,5 +53,22 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'post',data})
   }
 
+  renameGroupChat(data:any){
+    const url='/api/chat/rename';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
+
+  addUserToGroupChat(data:any){
+    const url='/api/chat/groupadd';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
+
+  leaveGroupChat(data:any){
+    const url='/api/chat/groupremove';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
+
+  
+
 
 }
