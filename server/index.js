@@ -9,6 +9,7 @@ const socketIo = require('socket.io')
 require('dotenv').config()
 
 const app = express()
+const server = http.createServer(app);
 
 app.use(cors())
 app.use(express.json())
@@ -21,7 +22,6 @@ app.use(notFound)
 app.use(errorHandler);
 
 
-const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
         origin: "http://localhost:4200",
