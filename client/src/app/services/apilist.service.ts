@@ -68,6 +68,11 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'put',data})
   }
 
+  isUpdateUser(data:any){
+    const url='/auth/updateuser';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
+
   
 
 

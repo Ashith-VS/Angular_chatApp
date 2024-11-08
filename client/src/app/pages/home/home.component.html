@@ -2,7 +2,8 @@
     <div class="row border">
 
         <div class="col-3 vh-100 ">
-            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary p-4" style="height: 100%;">
+            <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary p-4"
+                style="height: 100%;">
 
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
                     <span class="fs-5 fw-semibold">Chat App</span>
@@ -13,7 +14,7 @@
                             (click)="showDropdown()" />
                         @if (isDropdownVisible) {
                         <div class="dropdown-menu ">
-                            <li class="dropdown-item" (click)="handleNavigate('profile')">Profile</li>
+                            <li class="dropdown-item" (click)="handleProfileShow()">Profile</li>
                             <li class="dropdown-item" (click)="handleLogout($event)">Logout</li>
                         </div>
                         }
@@ -23,8 +24,8 @@
 
                 <!-- searchbar -->
                 <form class="m-2 p-2" (submit)="handleSearch($event)">
-                    <input type="text" [(ngModel)]="searchTerm" name="search" (input)="handleSearch($event)" class="form-control"
-                        placeholder="Search...">
+                    <input type="text" [(ngModel)]="searchTerm" name="search" (input)="handleSearch($event)"
+                        class="form-control" placeholder="Search...">
                 </form>
 
 
@@ -40,8 +41,7 @@
                                 style="width: 40px; height: 40px; margin-right: 10px;" />
                             <div class="flex-grow-1 ">
                                 <strong class="mb-1">{{item.username}}</strong>
-                                <small class="ms-4">Wed</small>
-                                <div class="col-10 mb-1 small">last message</div>
+                                <small class="ms-4"></small>
                             </div>
                         </div>
                     </div>
@@ -56,10 +56,12 @@
                     <div class="list-group-item list-group-item-action  py-3 lh-sm " aria-current="true"
                         [class]="{'selected-chat': chat?._id === selectedChat?._id}" (click)="handleSelectChat(chat)">
                         <div class="d-flex w-100 align-items-center justify-between ">
+                            <!-- <img src="{{chat.avatar}}" alt="{{item.username}}'s avatar" class="rounded-circle"
+                                style="width: 40px; height: 40px; margin-right: 10px;" /> -->
                             <strong class="mb-1">{{chat.isGroupChat?
                                 chat?.chatName:getSender(currentUser,chat?.users)}}</strong>
                         </div>
-                        <div class="col-10 mb-1 small">last message</div>
+                        <div class="col-10 mb-1 small"></div>
                     </div>
                     }
 
@@ -72,14 +74,14 @@
 
             <div id="head" class="py-2 lh-sm border-bottom ">
                 @if (selectedChat) {
-                    <img src="./assets/icons/back.png" alt="" class="img me-2" (click)="handleNavigate('home')">
-                <strong
-                    class="mb-1">{{selectedChat.isGroupChat?selectedChat.chatName:getSender(currentUser,selectedChat.users)}}</strong>
-                
+                <img src="./assets/icons/back.png" alt="" class="img me-2" (click)="handleNavigateBack()">
+                <strong class="mb-1">{{selectedChat?.isGroupChat? selectedChat?.chatName
+                    :getSender(currentUser,selectedChat?.users)}}</strong>
+
                 <img src="./assets/icons/info.png" alt="" class="img" style="float: right;background-color: black;"
                     (click)="(selectedChat?.isGroupChat ? handleOpenModal() : handleShowUserModal())">
                 }
-                
+
             </div>
 
             <div #scrollableDiv id="conversation" class="px-3">
@@ -128,8 +130,7 @@
         <!-- Modal groupchat -->
         @if (openModal) {
         <div [class]="(openModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
-            aria-labelledby="exampleModalLabel" 
-            style="display: block;background: rgba(0, 0, 0, 0.5);">
+            aria-labelledby="exampleModalLabel" style="display: block;background: rgba(0, 0, 0, 0.5);">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -157,7 +158,6 @@
                             <div class="mb-3">
                                 <input type="text" [(ngModel)]="search" name="search" (input)="handleSearchUser()"
                                     placeholder="Add User to Group" class="form-control">
-
                             </div>
 
                             <!-- Display search results -->
@@ -188,8 +188,7 @@
         <!-- Modal showUser -->
         @if (openUserModal) {
         <div [class]="(openUserModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
-            aria-labelledby="exampleModalLabel"
-            style="display: block;background: rgba(0, 0, 0, 0.5);">
+            aria-labelledby="exampleModalLabel" style="display: block;background: rgba(0, 0, 0, 0.5);">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -199,10 +198,13 @@
                     </div>
                     <div class="modal-body">
                         <div class="text-center mb-4">
-                            <img [src]="getSenderfullDetail(currentUser,selectedChat?.users).avatar" alt="Profile Avatar" class="rounded-circle img-thumbnail" style="width: 100px; height: 100px;" />
+                            <img [src]="getSenderfullDetail(currentUser,selectedChat?.users).avatar"
+                                alt="Profile Avatar" class="rounded-circle img-thumbnail"
+                                style="width: 100px; height: 100px;" />
                         </div>
                         <h5 class="text-center">{{getSenderfullDetail(currentUser,selectedChat?.users).name}}</h5>
-                        <p class="text-muted text-center">{{getSenderfullDetail(currentUser,selectedChat?.users).email}}</p>
+                        <p class="text-muted text-center">{{getSenderfullDetail(currentUser,selectedChat?.users).email}}
+                        </p>
                         <p class="text-muted text-center">Hello, I am using Chat App</p>
                     </div>
                     <div class="modal-footer">
@@ -214,7 +216,97 @@
         </div>
         }
 
+        <!-- profile modal -->
+        @if (isProfileModalVisible) {
+        <div class="modal" tabindex="-1" role="dialog" [class]="(isProfileModalVisible ? '' : 'fade') "
+            [style.display]="isProfileModalVisible ? 'block' : 'none'" style="background: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Profile</h5>
+                        <button type="button" class="btn-close" (click)="closeProfileModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <!-- Avatar Image / Upload Option -->
+                            @if (editing) {
+                            <label for="file">
+                                <img [src]="currentUser.avatar" alt="Upload Avatar" class="avatar-image" />
+                                <span class="upload-text">Upload an Image</span>
+                            </label>
+                            <input type="file" id="file" accept="image/*" (change)="handleAvatar($event)" hidden />
+                            }@else {
+                            <img [src]="currentUser.avatar" alt="Profile Avatar" class="avatar-image"
+                                style="width: 100px; height: 100px;" />
+                            }
+                        </div>
+                        <!-- Profile Information -->
+                        <h5 class="text-center">{{ currentUser.username }}</h5>
+                        <p class="text-muted text-center">{{ currentUser.email }}</p>
+                        <p class="text-muted text-center">{{ currentUser.about}}</p>
+                        <!-- Editable Form -->
+                        @if (editing) {
+                        <div>
+                            <form (ngSubmit)="handleUpdateProfile()">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" [(ngModel)]="currentUser.username"
+                                        name="name" placeholder="Enter your name" />
+                                </div>
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" [(ngModel)]="currentUser.email" name="email"
+                                        placeholder="Enter your email" />
+                                </div>
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" [(ngModel)]="currentUser.about"
+                                        name="status" placeholder="Enter your status" />
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                            </form>
+                        </div>
+                        }
+                        <!-- Change Password Form -->
+                        <div class="change-password-section mt-4" *ngIf="changePassword">
+                            <h5 class="text-center">Change Password</h5>
+                            @if (changePassword) {
+                            <form (ngSubmit)="handlePasswordChange()" class="mt-3">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" [(ngModel)]="password" name="password"
+                                        placeholder="Enter your current password" />
+                                </div>
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" [(ngModel)]="newPassword" name="newPassword"
+                                        placeholder="Enter your new password" />
+                                </div>
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" [(ngModel)]="confirmPassword"
+                                        name="confirmPassword" placeholder="Confirm your new password" />
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100 ">Update Password</button>
+                            </form>
+                            }
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-primary" (click)="handleChangePasswordToggle()">Change
+                            password</button>
+                        <div class="d-flex gap-2">
 
+                            <button *ngIf="!editing" type="button" class="btn btn-secondary"
+                                (click)="startEditing()">Edit
+                                Profile</button>
+                            <button *ngIf="editing" type="button" class="btn btn-secondary"
+                                (click)="cancelEditing()">cancelEditing</button>
+
+                            <button type="button" class="btn btn-secondary" (click)="closeProfileModal()">Close</button>
+                        </div>
+                    </div>
+                    <div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
 
     </div>
 </div>

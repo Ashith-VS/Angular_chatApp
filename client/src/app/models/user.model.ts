@@ -3,7 +3,7 @@ export interface userModel {
     username: string;
     email: string;
     avatar: string;
-    onlineStatus: boolean;
+   about: string;
     createdAt: string;
     updatedAt: string;
     __v: number;

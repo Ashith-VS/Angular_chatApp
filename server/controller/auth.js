@@ -4,7 +4,7 @@ const User = require("../model/userModel");
 
 const isRegister = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password,avatar } = req.body;
         if (!username || !email || !password) {
             return res.status(400).json({ status: 400, message: 'All fields are required' });
         }
@@ -14,7 +14,7 @@ const isRegister = async (req, res) => {
         }
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ username, email, password: hashedPassword});
+        const user = new User({ username, email, password: hashedPassword,avatar});
         await user.save();
         res.status(200).json({ status: 200, message: 'User registered successfully' });
     } catch (error) {
@@ -51,4 +51,20 @@ const isCurrentUser = async (req, res) => {
 }
 
 
-module.exports = { isRegister, isLogin, isCurrentUser };
+const updateCurrentUser = async (req, res) => {
+    try {
+        // console.log('req.body: ', req.body);
+        // console.log('req.id: ', req.id);
+        const user = await User.findByIdAndUpdate(req.id, req.body, { new: true });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ status: 200, user })
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error updating user data' });
+    }
+}
+
+
+module.exports = { isRegister, isLogin, isCurrentUser,updateCurrentUser };

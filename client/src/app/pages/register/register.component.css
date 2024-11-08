@@ -2,18 +2,118 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh; /* Full viewport height */
-    background-color: #f0f2f5; /* Light background color */
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .reg-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
   }
 
   h1 {
     text-align: center;
+    color: #2c3e50;
+    margin-bottom: 1rem;
   }
   
-  .form-group {
-    margin-bottom: 15px;
-  }
-  
-  button {
-    width: 100%;
-  }
+  /* Error messages */
+.error-message {
+  margin-bottom: 1rem;
+  list-style: none;
+  padding: 0;
+}
+.error {
+  color: red;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.error:focus {
+  outline: 2px solid blue; /* or any color of your choice */
+  outline-offset: 2px; /* to create some space between the outline and element */
+}
+
+  /* Avatar Upload Container */
+.avatar-upload {
+  position: relative;
+  margin: 1rem 0; /* Equivalent to my-4 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Label for avatar input */
+.avatar-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Avatar Image Styling */
+.avatar-image {
+  width: 5rem; /* Equivalent to w-20 */
+  height: 5rem; /* Equivalent to h-20 */
+  border-radius: 50%; /* Equivalent to rounded-full */
+  border: 2px solid #d1d5db; /* Equivalent to border-2 border-gray-300 */
+  object-fit: cover;
+  margin-bottom: 1rem; /* Equivalent to mb-4 */
+}
+
+/* Text Styling for Upload */
+.upload-text {
+  color: #6b7280; /* Equivalent to text-gray-500 */
+  font-size: 0.875rem; /* Equivalent to text-sm */
+}
+
+/* Form field styling */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-control:focus {
+  border-color: #2c3e50;
+  outline: none;
+  box-shadow: 0 0 5px rgba(44, 62, 80, 0.2);
+}
+
+/* Validation note */
+.form-text {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Button styling */
+.btn-primary {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #2c3e50;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.btn-primary:hover {
+  background-color: #34495e;
+}
+
+/* Login link */
+.login-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+.login-link a {
+  color: #2c3e50;
+  text-decoration: underline;
+}

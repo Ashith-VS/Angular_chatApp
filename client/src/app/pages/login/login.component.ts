@@ -1,5 +1,5 @@
 import { routes } from './../../app.routes';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { ApilistService } from '../../services/apilist.service';
@@ -11,7 +11,7 @@ import { ApilistService } from '../../services/apilist.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   errorObj: { [key: string]: string } = {};
 
@@ -20,6 +20,20 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
     });
+  }
+
+  ngOnInit(): void {
+    this.handleClearError();
+  }
+
+  handleClearError(){
+Object.keys(this.loginForm.controls).forEach((key)=>{
+  this.loginForm.get(key)?.valueChanges.subscribe(()=>{
+    if(this.errorObj[key]){
+      delete this.errorObj[key];
+    }
+  })
+})
   }
 
   handleSubmit(e:Event){
@@ -46,12 +60,10 @@ export class LoginComponent {
         this.errorObj['general'] = error.message || 'An error occurred during login';
     }
   )
-      
-
-
     }else{
       setTimeout(() => {
         const firstErrorElement = document.querySelector(".error")as HTMLElement;
+        console.log('firstErrorElement: ', firstErrorElement);
         if (firstErrorElement) {
           firstErrorElement.focus();
         }

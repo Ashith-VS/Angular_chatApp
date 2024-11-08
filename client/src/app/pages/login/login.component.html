@@ -4,7 +4,7 @@
         @if (errorObjArr().length>0) {
         <ul class="error-message">
             @for (item of errorObjArr(); track $index) {
-            <li (click)="focusInput(item)" class="error" style="color: red; text-decoration: none;">{{errorObj[item]}}</li>
+            <li (click)="focusInput(item)" class="error" tabindex="0">{{errorObj[item]}}</li>
             }
         </ul>
         }

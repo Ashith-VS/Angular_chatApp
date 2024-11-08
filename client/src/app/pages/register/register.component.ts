@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApilistService } from '../../services/apilist.service';
+
 
 @Component({
   selector: 'app-register',
@@ -10,27 +11,61 @@ import { ApilistService } from '../../services/apilist.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit{
   registerForm: FormGroup;
   errorObj: { [key: string]: string } = {};
+  defaultAvatarIcon = './assets/icons/avatar.webp';
+  avatar: File | null = null;
 
   constructor(private fb: FormBuilder,private registrationService:ApilistService,private router:Router) {
     // Initialize the form with form controls and validators
     this.registerForm = this.fb.group({
       username: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, Validators.pattern(/^(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)]],
     });
+  }
+
+  ngOnInit(): void {
+    this.handleClearError();
+  }
+
+  handleAvatar(e:Event):void{
+    const file=(e.target as HTMLInputElement).files?.[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = (e:any) => {
+        this.avatar = e.target.result;
+        console.log('this.avatar4: ', this.avatar);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  handleClearError(){
+Object.keys(this.registerForm.controls).forEach((key)=>{
+  this.registerForm.get(key)?.valueChanges.subscribe(()=>{
+    if(this.errorObj[key]){
+      delete this.errorObj[key];
+    }
+  })
+})
   }
 
   handleSubmit(e: Event) {
     e.preventDefault();
     this.errorObj = {};
     this.handleValidate();
+    console.log('this.registerForm.valid: ', this.registerForm.valid);
     if (this.registerForm.valid) {
-      // console.log("Form Submitted", this.registerForm.value);
-      this.registrationService.isRegister(this.registerForm.value).subscribe(res=>{
-        
+      const formObject: any = { ...this.registerForm.value };
+ // Add avatar data if present
+ if (this.avatar) {
+  formObject['avatar'] = this.avatar;
+}
+
+// console.log("Form Payload:", formObject);
+      this.registrationService.isRegister(formObject).subscribe(res=>{
         if(res.status===200){
           this.registerForm.reset();
           this.router.navigate(['/login']);
@@ -64,6 +99,8 @@ export class RegisterComponent {
           this.errorObj[key] = `Invalid email format`;
         } else if (controlErrors['minlength']) {
           this.errorObj[key] = `${key} should be at least ${controlErrors['minlength'].requiredLength} characters`;
+        }else if (controlErrors['pattern'] && key === 'password') {
+          this.errorObj[key] = `Password must be at least 8 characters long, with at least one uppercase letter and one special character.`;
         }
       }
     });
@@ -80,6 +117,8 @@ export class RegisterComponent {
       inputElement.focus();
     }
   }
+
+  
 
 
 }

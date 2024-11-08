@@ -30,6 +30,12 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   search:string=''
   searchResults:any=[];
   openUserModal:boolean = false
+  isProfileModalVisible = false;
+  editing = false;
+  changePassword:boolean = false
+  password:string='';
+  newPassword:string='';
+  confirmPassword:string='';
  
 
 
@@ -56,6 +62,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
       this.cdr.detectChanges();
       // console.log('this.messages: ', this.messages);
     })
+  
+   
 
     // console.log('this.form.value.message: ', this?.form?.value?.message);
   }
@@ -136,8 +144,8 @@ fetchAllMessages(){
 
 
 getSender(currentuser:any,users:any){
-  const user=users.find((user:any)=>user._id !== currentuser._id)
-  return  user.username
+  const user=users?.find((user:any)=>user?._id !== currentuser?._id)
+  return  user?.username
 }
 
 getSenderfullDetail(currentuser:any,users:any){
@@ -166,7 +174,10 @@ handleNavigate(route:string):void{
 }
 
 handleNavigateBack(): void {
-  this.location.back();
+  this.selectedChat=null;
+
+  console.log("back", this.selectedChat);
+  // this.location.back();
 }
 
 handleOpenModal(){
@@ -239,7 +250,7 @@ handleRemove(user:any){
     // this.selectedChat=res.chat;
     user?._id === this.currentUser._id ?this.selectedChat={}:this.selectedChat(res.chat)
     // console.log('this.selectedChat: ', this.selectedChat);
-    // this.selectedChat = {}
+    this.selectedChat= null
     this.openModal=false
     this.fetchAllChats()
   })
@@ -247,19 +258,66 @@ handleRemove(user:any){
 
 
 
-
-
-
-
-
-
 handleShowUserModal(){
-  console.log("showUserModal")
   this.openUserModal =!this.openUserModal;
 }
 
 handleCloseUserModal(){
   this.openUserModal = false;
+}
+
+handleProfileShow(){
+  this.isProfileModalVisible =!this.isProfileModalVisible;
+}
+
+
+closeProfileModal() {
+  this.isProfileModalVisible = false;
+  this.editing = false;
+}
+
+startEditing() {
+  this.editing = true;
+}
+
+cancelEditing() {
+  this.editing = false;
+}
+
+handleAvatar(e:Event):void{
+  const file=(e.target as HTMLInputElement).files?.[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = (e:any) => {
+      this.currentUser.avatar = e.target.result;
+      console.log('this.currentUser.avatar: ', this.currentUser.avatar);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+handleUpdateProfile() {
+  const data={
+    username: this.currentUser.username,
+    email:this.currentUser.email,
+    about: this.currentUser.about,
+    avatar: this.currentUser.avatar,
+  }
+  // console.log('data: ', data);
+
+  this.homeService.isUpdateUser(data).subscribe(res=>{
+    // console.log(res,"register");
+    this.editing = false;
+    this.closeProfileModal();
+  })
+}
+
+handleChangePasswordToggle(){
+  this.changePassword=!this.changePassword
+}
+
+handlePasswordChange(){
+
 }
   
 
