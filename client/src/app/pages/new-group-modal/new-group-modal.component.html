@@ -9,6 +9,15 @@
 
       <div class="modal-body">
         <form (ngSubmit)="handleCreateGroup($event)">
+          <!-- Group Image Upload Section -->
+          <div class="mb-3 text-center">
+            <label for="groupImage">
+              <img [src]="groupImagePreview ? groupImagePreview : './assets/icons/avatar.webp'" alt="GroupImage" class="avatar-image" style="width: 100px; height: 100px;" />
+              <span class="upload-text">Add Group Icon</span>
+            </label>
+            <input type="file" id="groupImage" accept="image/*" (change)="handleImage($event)" hidden />
+          </div>
+      
           <input type="text" placeholder="Group Name" [(ngModel)]="groupName" name="groupName"
             class="form-control mb-3" />
           <input type="text" placeholder="Add Users" [(ngModel)]="search" name="search" (input)="handleSearch()"
@@ -33,13 +42,13 @@
             <h6>Selected Users:</h6>
             <ul class="list-group mb-3">
               @for (user of selectedUsers; track $index) {
-              <li  class="list-group-item">
+              <li class="list-group-item">
                 {{ user.username }}
                 <button type="button" class="btn btn-sm btn-danger float-end" (click)="removeUser(user)">Remove</button>
               </li>}
             </ul>
           </div>
-        }
+          }
         </form>
       </div>
       <div class="modal-footer">

@@ -19,7 +19,21 @@ export class NewGroupModalComponent {
   search:string = '';
   searchResults:any=[];
   selectedUsers:any=[] 
+  groupImagePreview: string| ArrayBuffer | null = null;
 
+
+  handleImage (event: Event){
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.groupImagePreview = reader.result;
+        // console.log('this.groupImagePreview: ', this.groupImagePreview);
+      };
+      reader.readAsDataURL(file);
+    }
+
+  }
 
 
   closeNewGroupModal() {
@@ -42,7 +56,7 @@ export class NewGroupModalComponent {
     if (!this.selectedUsers.some((selectedUser:any) => selectedUser._id === user._id)) {
       
       this.selectedUsers=[...this.selectedUsers,user]
-      console.log('this.selectedUsers1: ', this.selectedUsers);
+      // console.log('this.selectedUsers1: ', this.selectedUsers);
       
       // Remove the added user from the search results
       this.searchResults = this.searchResults.filter((u: any) => u._id !== user._id);
@@ -68,11 +82,12 @@ export class NewGroupModalComponent {
     e.preventDefault();
     const data={
       chatName: this.groupName,
-      users: this.selectedUsers
+      users: this.selectedUsers,
+      groupImage: this.groupImagePreview
     }
 
     this.groupService.createGroupChat(data).subscribe(res=>{
-      console.log("groupchat44",res)
+      // console.log("groupchat44",res)
       // Clear input field after creating the group
     this.groupName = '';
     this.selectedUsers = [];

@@ -73,7 +73,20 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'put',data})
   }
 
-  
+  isChangePassword(data:any){
+    const url='/auth/changePassword';
+    return this.networkService.networkRequest({url,method:'post',data})
+  }
+
+  addAdminsToGroupChat(data:any){
+    const url='/api/chat/groupadminadd';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
+
+  removeAdminFromGroupChat(data:any){
+    const url='/api/chat/groupadminremove';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
 
 
 }

@@ -30,8 +30,8 @@
 
 
                 <div class="list-group list-group-flush border-bottom scrollable-area">
-                    @if (searchUsers.length>0) {
                     <!-- search list -->
+                    @if (searchUsers.length>0) {
                     <span>Contacts:</span>
                     @for (item of searchUsers; track $index) {
                     <div (click)="handleSelectUser(item?._id)"
@@ -56,12 +56,20 @@
                     <div class="list-group-item list-group-item-action  py-3 lh-sm " aria-current="true"
                         [class]="{'selected-chat': chat?._id === selectedChat?._id}" (click)="handleSelectChat(chat)">
                         <div class="d-flex w-100 align-items-center justify-between ">
-                            <!-- <img src="{{chat.avatar}}" alt="{{item.username}}'s avatar" class="rounded-circle"
-                                style="width: 40px; height: 40px; margin-right: 10px;" /> -->
+                            <img [src]="chat.isGroupChat? chat.groupImage : getOtherUserAvatar(currentUser, chat.users)  "
+                                alt="avatar" class="rounded-circle"
+                                style="width: 40px; height: 40px; margin-right: 10px;" />
                             <strong class="mb-1">{{chat.isGroupChat?
                                 chat?.chatName:getSender(currentUser,chat?.users)}}</strong>
                         </div>
-                        <div class="col-10 mb-1 small"></div>
+                        <div class="col-10 mb-1 small ms-5">
+                            {{ chat.isGroupChat
+                            ? (chat.latestMessage?.sender?.username && chat.latestMessage?.content
+                            ? chat.latestMessage?.sender?.username + ': ' + chat.latestMessage.content
+                            : '')
+                            : (chat.latestMessage?.content || '')
+                            }}
+                        </div>
                     </div>
                     }
 
@@ -120,14 +128,11 @@
                 </div>
             </form>
             }
-
-
         </div>
 
 
 
-
-        <!-- Modal groupchat -->
+        <!-- Modal groupchat info -->
         @if (openModal) {
         <div [class]="(openModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
             aria-labelledby="exampleModalLabel" style="display: block;background: rgba(0, 0, 0, 0.5);">
@@ -139,14 +144,38 @@
                             (click)="handleCloseModal()"></button>
                     </div>
                     <div class="modal-body">
-                        <h6>Chat Participants:</h6>
+                        <h6>Group Admins :</h6>
                         <div class="user-badges">
-                            @for (user of selectedChat?.users; track $index) {
+                            @for (user of selectedChat?.groupAdmin; track $index) {
                             <div class="badge bg-secondary m-2 p-3 position-relative">
                                 <span class="me-2">{{ user.username }}</span>
+                                <!-- @if (selectedChat.groupCreator !==currentUser._id) {
+                                @if(isGroupAdmin(selectedChat,currentUser)){
+                                    <button type="button" class="btn-close position-absolute top-0 end-0 me-2 mt-1"
+                                        aria-label="Remove user" (click)="handleRemove(user)"></button>
+                                    <button type="button" class="btn-primary top-0 end-0 me-2 mt-1"
+                                        (click)="handleRemoveGroupAdmins(user)">Dismiss as Admin</button>
+
+                                }} -->
+                            
+
+                            </div>
+                            }
+                        </div>
+                        <h6>Chat Participants :</h6>
+                        <div class="user-badges">
+                            @for (user of filteredUsers; track $index) {
+                            <div class="badge bg-secondary m-2 p-3 position-relative">
+                                <span class="me-2">{{ user.username }}</span>
+                                @if (isGroupAdmin(selectedChat,currentUser)) {
                                 <button type="button" class="btn-close position-absolute top-0 end-0 me-2 mt-1"
                                     aria-label="Remove user" (click)="handleRemove(user)"></button>
-                            </div>}
+
+                                <button type="button" class="btn-primary top-0 end-0 me-2 mt-1"
+                                    (click)="handleAddGroupAdmins(user)">AddGroupAdmins</button>
+                                }
+                            </div>
+                            }
                         </div>
                         <form>
                             <div class="mt-2 mb-3 d-flex align-items-center">
@@ -155,10 +184,12 @@
                                 <button type="button" class="btn btn-primary m-2"
                                     (click)="handleRename()">Rename</button>
                             </div>
+                            @if (isGroupAdmin(selectedChat,currentUser)) {
                             <div class="mb-3">
                                 <input type="text" [(ngModel)]="search" name="search" (input)="handleSearchUser()"
                                     placeholder="Add User to Group" class="form-control">
                             </div>
+                            }
 
                             <!-- Display search results -->
                             @if (searchResults.length > 0) {
@@ -185,7 +216,7 @@
         </div>
         }
 
-        <!-- Modal showUser -->
+        <!-- Modal showUser info -->
         @if (openUserModal) {
         <div [class]="(openUserModal? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
             aria-labelledby="exampleModalLabel" style="display: block;background: rgba(0, 0, 0, 0.5);">
@@ -264,11 +295,41 @@
                             </form>
                         </div>
                         }
-                        <!-- Change Password Form -->
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-primary" (click)="handleChangePasswordToggle()">Change
+                            password</button>
+                        <div class="d-flex gap-2">
+                            <button *ngIf="!editing" type="button" class="btn btn-secondary"
+                                (click)="startEditing()">Edit
+                                Profile</button>
+                            <button *ngIf="editing" type="button" class="btn btn-secondary"
+                                (click)="cancelEditing()">cancel Editing</button>
+                            <!-- <button type="button" class="btn btn-secondary" (click)="closeProfileModal()">Close</button> -->
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- change password -->
+        @if (changePassword) {
+        <div [class]="(changePassword? '' : 'fade' ) + 'modal'" id="exampleModal" tabindex="0"
+            aria-labelledby="exampleModalLabel" style="display: block;background: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Change Password</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            (click)="handleChangePasswordToggle()"></button>
+                    </div>
+                    <div class="modal-body">
                         <div class="change-password-section mt-4" *ngIf="changePassword">
-                            <h5 class="text-center">Change Password</h5>
                             @if (changePassword) {
-                            <form (ngSubmit)="handlePasswordChange()" class="mt-3">
+                            <form (submit)="handlePasswordChange($event)" class="mt-3">
                                 <div class="mb-3">
                                     <input type="text" class="form-control" [(ngModel)]="password" name="password"
                                         placeholder="Enter your current password" />
@@ -286,23 +347,7 @@
                             }
                         </div>
                     </div>
-                    <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-primary" (click)="handleChangePasswordToggle()">Change
-                            password</button>
-                        <div class="d-flex gap-2">
 
-                            <button *ngIf="!editing" type="button" class="btn btn-secondary"
-                                (click)="startEditing()">Edit
-                                Profile</button>
-                            <button *ngIf="editing" type="button" class="btn btn-secondary"
-                                (click)="cancelEditing()">cancelEditing</button>
-
-                            <button type="button" class="btn btn-secondary" (click)="closeProfileModal()">Close</button>
-                        </div>
-                    </div>
-                    <div>
-
-                    </div>
                 </div>
             </div>
         </div>

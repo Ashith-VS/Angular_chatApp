@@ -5,6 +5,7 @@ import { chatModel, User, userModel, userSearchModel } from '../../models/user.m
 import { Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { SocketService } from '../../services/socket.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-home',
@@ -27,6 +28,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   isDropdownVisible: boolean = false;
   openModal: boolean = false;
   groupChatName:string=''
+  AddGroupAdmins:string=''
   search:string=''
   searchResults:any=[];
   openUserModal:boolean = false
@@ -36,17 +38,16 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   password:string='';
   newPassword:string='';
   confirmPassword:string='';
- 
+  filteredUsers:any=[]
 
 
-  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location){
+  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location,private toast:ToastrService){
     this.form= this.fb.group({
       message:""
     })
   }
 
   ngOnInit(): void {
-    // window.scrollTo({ top: 1000, behavior: 'smooth' });
     this.homeService.isCurrrentUser().subscribe((res:any)=>{
       this.currentUser=res.user
       this.socketService.sendCurrentUser(this.currentUser)
@@ -62,10 +63,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
       this.cdr.detectChanges();
       // console.log('this.messages: ', this.messages);
     })
-  
-   
-
-    // console.log('this.form.value.message: ', this?.form?.value?.message);
   }
 
   fetchAllChats(): void {
@@ -84,20 +81,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 ngAfterViewChecked(): void {
     this.scrollToBottom()
   }
- 
-
-
 
 handleSubmit(){
-  // console.log(this.form.value.message)
-  // console.log(this.selectedChat._id)
   const data={
     chatId: this.selectedChat._id,
     content: this.form.value.message
   }
-  // console.log('data: ', data);
+
   this.homeService.sendMessages(data).subscribe(res=>{
-console.log("sendMessages",res.message)
 this.socketService.sendMessage(res.message)
 this.messages=[...this.messages,res.message]
 this.form.get('message')?.setValue('')
@@ -110,34 +101,27 @@ handleSearch(e:Event){
   // console.log("Searching for:", this.searchTerm);
   this.homeService.getUsersBySearch(this.searchTerm).subscribe((res:userSearchModel)=>{
     this.searchUsers=res.users;
-    console.log('res.users: ', res.users);
-
   })
 }
 
 handleSelectUser(user:any){
-  // console.log('user: ', user);
   this.homeService.getAccessChat(user).subscribe(res=>{
     // if(!this.chats.find(ch => ch._id=== res._id)) this.chats.push[res.chat,...this.chats]
     this.selectedChat=res.chat;
-    // console.log('this.selectedChat: ', this.selectedChat);
     this.fetchAllMessages()
   })
 }
 
 handleSelectChat(user:any){
-  // console.log('user444: ', user);
   this.selectedChat=user;
+  console.log('this.selectedChat: ', this.selectedChat);
   this.fetchAllMessages()
 }
 
 fetchAllMessages(){
   if(!this.selectedChat)return;
-  console.log('this.selectedChat: ', this.selectedChat);
   this.homeService.fetchAllMessages(this.selectedChat?._id).subscribe(res=>{
-    // console.log("all messages of selected chat: ", res.messages);
     this.messages=res.messages;
-    // console.log('this.messages: ', this.messages);
   })
   this.socketService.joinRoom(this.selectedChat._id)
 }
@@ -157,6 +141,21 @@ getSenderfullDetail(currentuser:any,users:any){
   }
 }
 
+getAllAdmins(user:any){
+user.map((adm:any)=>{
+    return adm.avatar
+  })
+}
+
+isGroupAdmin(selectedChat: any, currentUser: any){
+  return selectedChat.groupAdmin.some((admin: any) => admin._id === currentUser._id);
+}
+
+
+getOtherUserAvatar(currentUser: any, users: any[]): string {
+  const otherUser = users.find(user => user._id !== currentUser._id);
+  return otherUser?.avatar 
+}
 
 handleLogout(e:Event){
   e.preventDefault();
@@ -166,7 +165,7 @@ handleLogout(e:Event){
 
 showDropdown(){
   this.isDropdownVisible = !this.isDropdownVisible;
-  console.log('this.isDropdownVisible: ', this.isDropdownVisible);
+  // console.log('this.isDropdownVisible: ', this.isDropdownVisible);
 }
 
 handleNavigate(route:string):void{
@@ -175,14 +174,20 @@ handleNavigate(route:string):void{
 
 handleNavigateBack(): void {
   this.selectedChat=null;
-
-  console.log("back", this.selectedChat);
   // this.location.back();
 }
 
 handleOpenModal(){
   this.openModal =!this.openModal;
-  // console.log('this.openModal: ', this.openModal);
+  if (this.openModal && this.selectedChat) {
+    // Filter users who are in the groupAdmin array
+    const value = this.selectedChat.users.filter((user: any) =>
+      !this.selectedChat.groupAdmin.some((admin: any) => admin._id === user._id)
+  );
+  // console.log('value: ', value);
+  this.filteredUsers=value;
+  // console.log('this.filteredUsers: ', this.filteredUsers);
+  }
 }
 
 handleCloseModal(){
@@ -192,7 +197,6 @@ this.openModal=false;
 handleSearchUser(){
   if(!this.search)return
   this.homeService.getUsersBySearch(this.search).subscribe(res=>{
-    // console.log('res: ', res.users);
     this.searchResults=res.users;
   })
 }
@@ -202,7 +206,11 @@ handleAddUser(user:any){
     alert('User already added');
     return
   }
-  if(this.selectedChat.groupAdmin._id !== this.currentUser._id){
+  // if(this.selectedChat.groupAdmin._id !== this.currentUser._id){
+  //   alert('Only group admin can add users');
+  //   return
+  // }
+  if(this.selectedChat.groupAdmin.some((admin:any)=>admin.id === this.currentUser._id )){
     alert('Only group admin can add users');
     return
   }
@@ -211,7 +219,6 @@ handleAddUser(user:any){
     userId: user._id
   }
   this.homeService.addUserToGroupChat(data).subscribe(res=>{
-    // console.log('addUserToGroupChat: ', res.chat);
     this.selectedChat=res.chat;
     // this.fetchAllMessages()
   })
@@ -226,7 +233,6 @@ handleRename(){
     chatName: this.groupChatName
   }
   this.homeService.renameGroupChat(data).subscribe(res=>{
-    // console.log('renameGroupChat: ', res.chat);
     this.selectedChat=res.chat;
     this.fetchAllMessages()
     this.groupChatName=''
@@ -234,8 +240,11 @@ handleRename(){
 }
 
 handleRemove(user:any){
-  console.log('user: ', user);
-  if(this.selectedChat?.groupAdmin?._id !== this.currentUser._id && user._id !== this.currentUser._id){
+  // if(this.selectedChat?.groupAdmin?._id !== this.currentUser._id && user._id !== this.currentUser._id){
+  //   alert('Only group admin can remove users');
+  //   return
+  // }
+  if(this.selectedChat.groupAdmin.some((admin:any)=>admin.id === this.currentUser._id )){
     alert('Only group admin can remove users');
     return
   }
@@ -243,12 +252,12 @@ handleRemove(user:any){
     chatId: this.selectedChat._id,
     userId: user._id,
   }
-  console.log('data: ', data);
+  // console.log('data: ', data);
   this.homeService.leaveGroupChat(data).subscribe(res=>{
-    console.log('leaveGroupChat: ', res.chat);
+    // console.log('leaveGroupChat: ', res.chat);
 
-    // this.selectedChat=res.chat;
-    user?._id === this.currentUser._id ?this.selectedChat={}:this.selectedChat(res.chat)
+    // // this.selectedChat=res.chat;
+    // user?._id === this.currentUser._id ?this.selectedChat={}:this.selectedChat(res.chat)
     // console.log('this.selectedChat: ', this.selectedChat);
     this.selectedChat= null
     this.openModal=false
@@ -290,7 +299,7 @@ handleAvatar(e:Event):void{
     const reader = new FileReader();
     reader.onload = (e:any) => {
       this.currentUser.avatar = e.target.result;
-      console.log('this.currentUser.avatar: ', this.currentUser.avatar);
+      // console.log('this.currentUser.avatar: ', this.currentUser.avatar);
     };
     reader.readAsDataURL(file);
   }
@@ -303,10 +312,7 @@ handleUpdateProfile() {
     about: this.currentUser.about,
     avatar: this.currentUser.avatar,
   }
-  // console.log('data: ', data);
-
   this.homeService.isUpdateUser(data).subscribe(res=>{
-    // console.log(res,"register");
     this.editing = false;
     this.closeProfileModal();
   })
@@ -314,10 +320,65 @@ handleUpdateProfile() {
 
 handleChangePasswordToggle(){
   this.changePassword=!this.changePassword
+  this.isProfileModalVisible=false
+  
 }
 
-handlePasswordChange(){
+handlePasswordChange(e:Event){
+  e.preventDefault();
+  if(!this.password ||!this.newPassword ||!this.confirmPassword){
+    this.toast.error('All fields are required')
+    return
+  }
+  const pattern = /^(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!pattern.test(this.newPassword)) {
+    this.toast.error('Password must be at least 8 characters long, contain at least one uppercase letter, and include one special character.');
+    return;
+  }
 
+  if(this.newPassword !== this.confirmPassword){
+    this.toast.error('Passwords do not match');
+    return
+  }
+  const data={
+    currentPassword: this.password,
+    newPassword: this.newPassword
+  }
+  this.homeService.isChangePassword(data).subscribe({
+    next:(res)=>{
+      this.toast.success(res?.message ||'Password changed successfully');
+      this.password='';
+      this.newPassword='';
+      this.confirmPassword='';
+      this.changePassword=false;
+    },
+    error:(err)=>{
+      const errorMessage = err?.message || 'An error occurred while changing the password';
+      this.toast.error(errorMessage);
+    }
+  })
+
+}
+
+handleAddGroupAdmins(user:any){
+  const data={
+    chatId: this.selectedChat._id,
+    userIds: user._id
+  }
+  this.homeService.addAdminsToGroupChat(data).subscribe(res=>{
+    this.selectedChat=res.chat;
+  })
+}
+
+handleRemoveGroupAdmins(user:any){
+  const data={
+    chatId: this.selectedChat._id,
+    userId: user._id
+  }
+  console.log('data: ', data);
+  // this.homeService.removeAdminFromGroupChat(data).subscribe(res=>{
+  //   this.selectedChat=res.chat;
+  // })
 }
   
 

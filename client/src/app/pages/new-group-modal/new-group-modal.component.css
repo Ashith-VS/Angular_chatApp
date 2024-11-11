@@ -2,4 +2,11 @@
     display: block;
     background: rgba(0, 0, 0, 0.5); /* Optional overlay effect */
   }
-  
+  .avatar-image {
+    width: 5rem; /* Equivalent to w-20 */
+    height: 5rem; /* Equivalent to h-20 */
+    border-radius: 50%; /* Equivalent to rounded-full */
+    border: 2px solid #d1d5db; /* Equivalent to border-2 border-gray-300 */
+    object-fit: cover;
+    margin-bottom: 1rem; /* Equivalent to mb-4 */
+  }

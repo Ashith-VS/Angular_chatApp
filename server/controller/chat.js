@@ -75,13 +75,15 @@ const CreateGroupChat = async (req, res) => {
             return res.status(400).json({ status: 400, message: 'At least two users are required in a group chat' });
         }
         users.push(req.id)
-        
+
         try {
             const groupChat = await Chat.create({
                 chatName: req.body.chatName,
                 users: users,
                 isGroupChat: true,
-                groupAdmin: req.id
+                groupAdmin: [req.id],
+                groupImage: req.body.groupImage,
+                groupCreator:req.id
             })
             const fullChat = await Chat.findOne({ _id: groupChat._id }).populate("users", "-password").populate("groupAdmin", "-password")
             res.status(200).json({ status: 200, message: 'Group chat created successfully', chat: fullChat });
@@ -128,6 +130,7 @@ const AddtoGroup = async (req, res) => {
 const RemoveFromGroup = async (req, res) => {
     try {
         const { chatId, userId } = req.body;
+        // console.log('userId: ', userId);
         const removedUsers = await Chat.findByIdAndUpdate(chatId, { $pull: { users: userId } }, { new: true }).populate("users", "-password").populate("groupAdmin", "-password")
         if (!removedUsers) {
             return res.status(404).json({ status: 404, message: 'Chat not found' });
@@ -139,4 +142,33 @@ const RemoveFromGroup = async (req, res) => {
     }
 }
 
-module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup }
+const AddMultipleGroupAdmin = async (req, res) => {
+    try {
+        const { chatId, userIds } = req.body;
+        const updatedChat = await Chat.findByIdAndUpdate(chatId, { $push: { groupAdmin: userIds } }, { new: true }).populate("users", "-password").populate("groupAdmin", "-password")
+        if (!updatedChat) {
+            return res.status(404).json({ status: 404, message: 'Chat not found' });
+        }
+        res.status(200).json({ status: 200, message: 'Group admins updated successfully', chat: updatedChat });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 500, message: error.message });
+    }
+}
+
+const RemoveFromGroupAdmin =async(req,res) => {
+    try {
+        const { chatId, userId } = req.body;
+        const updatedChat = await Chat.findByIdAndUpdate(chatId, { $pull: { groupAdmin: userId } }, { new: true }).populate("users", "-password").populate("groupAdmin", "-password")
+        if (!updatedChat) {
+            return res.status(404).json({ status: 404, message: 'Chat not found' });
+        }
+        res.status(200).json({ status: 200, message: 'Group admin removed successfully', chat: updatedChat });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 500, message: error.message });
+    }
+
+}
+
+module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin,RemoveFromGroupAdmin}
