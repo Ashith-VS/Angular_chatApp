@@ -4,6 +4,7 @@ export interface userModel {
     email: string;
     avatar: string;
    about: string;
+   status: string;
     createdAt: string;
     updatedAt: string;
     __v: number;

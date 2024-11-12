@@ -12,12 +12,13 @@
           <!-- Group Image Upload Section -->
           <div class="mb-3 text-center">
             <label for="groupImage">
-              <img [src]="groupImagePreview ? groupImagePreview : './assets/icons/avatar.webp'" alt="GroupImage" class="avatar-image" style="width: 100px; height: 100px;" />
+              <img [src]="groupImagePreview ? groupImagePreview : './assets/icons/avatar.webp'" alt="GroupImage"
+                class="avatar-image" style="width: 100px; height: 100px;" />
               <span class="upload-text">Add Group Icon</span>
             </label>
             <input type="file" id="groupImage" accept="image/*" (change)="handleImage($event)" hidden />
           </div>
-      
+
           <input type="text" placeholder="Group Name" [(ngModel)]="groupName" name="groupName"
             class="form-control mb-3" />
           <input type="text" placeholder="Add Users" [(ngModel)]="search" name="search" (input)="handleSearch()"
@@ -57,4 +58,29 @@
       </div>
     </div>
   </div>
+
+
+  <!-- modal registration success -->
+  @if (showSuccessModal) {
+  <div class="modal " [class]="showSuccessModal ? '' : 'fade' " tabindex="-1" aria-labelledby="successModalLabel"
+    aria-hidden="true"
+    style="display: flex;background: rgba(0, 0, 0, 0.5);align-items: center; justify-content: center;">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModalLabel">Group Created</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            (click)="handleNavigate('home')"></button>
+        </div>
+        <div class="modal-body">
+          <p>Your group has been created successfully. You can now chat with your friends.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+            (click)="handleNavigate('home')">ok</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
 </div>

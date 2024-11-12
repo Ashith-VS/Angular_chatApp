@@ -88,5 +88,10 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'put',data})
   }
 
+  deleteAccount(){
+    const url='/auth/deleteaccount';
+    return this.networkService.networkRequest({url,method:'put'})
+  }
+
 
 }

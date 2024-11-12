@@ -100,3 +100,33 @@
   opacity: 0.85;
 }
 
+ /* Error messages */
+ .error-message {
+  margin-bottom: 1rem;
+  list-style: none;
+  padding: 0;
+}
+.error {
+  color: red;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.error:focus {
+  outline: 2px solid blue; /* or any color of your choice */
+  outline-offset: 2px; /* to create some space between the outline and element */
+}
+
+/* .status {
+  font-weight: bold;
+}
+
+.online {
+  color: green;
+}
+
+.offline {
+  color: red;
+} */
+

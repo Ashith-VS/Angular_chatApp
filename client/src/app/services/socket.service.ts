@@ -17,6 +17,12 @@ export class SocketService {
       .subscribe(()=>{this.socket.connect()})
   }
 
+  userStatus():Observable<String>{
+    return new Observable<String>(observer => {
+      this.socket.on('userStatus', (data: any) => observer.next(data))
+    })
+  }
+
 // Emit a message to the server
   sendCurrentUser(msg:any):void {
     // console.log('user: ', msg);

@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApilistService } from '../../services/apilist.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-new-group-modal',
@@ -12,7 +13,7 @@ import { ApilistService } from '../../services/apilist.service';
   styleUrl: './new-group-modal.component.css'
 })
 export class NewGroupModalComponent {
-  constructor(private routes:Router ,private groupService:ApilistService ){}
+  constructor(private routes:Router ,private groupService:ApilistService, private toast:ToastrService ){}
   
   isNewGroupModalOpen = true;
   groupName: string = '';
@@ -20,6 +21,7 @@ export class NewGroupModalComponent {
   searchResults:any=[];
   selectedUsers:any=[] 
   groupImagePreview: string| ArrayBuffer | null = null;
+  showSuccessModal:boolean = false;
 
 
   handleImage (event: Event){
@@ -53,6 +55,7 @@ export class NewGroupModalComponent {
   }
 
   addUser(user:any){
+    
     if (!this.selectedUsers.some((selectedUser:any) => selectedUser._id === user._id)) {
       
       this.selectedUsers=[...this.selectedUsers,user]
@@ -79,6 +82,7 @@ export class NewGroupModalComponent {
 
 
   handleCreateGroup(e:Event) {
+
     e.preventDefault();
     const data={
       chatName: this.groupName,
@@ -86,16 +90,28 @@ export class NewGroupModalComponent {
       groupImage: this.groupImagePreview
     }
 
-    this.groupService.createGroupChat(data).subscribe(res=>{
-      // console.log("groupchat44",res)
+    this.groupService.createGroupChat(data).subscribe({
+    next:  (res)=>{
+      console.log("groupchat44",res)
       // Clear input field after creating the group
     this.groupName = '';
     this.selectedUsers = [];
     this.search = '';
     this.searchResults = [];
+// show success modal
+this.showSuccessModal=true
+    }
+   , error: (err) => {
+      this.toast.error(err.message||'Failed to create group chat. Please try again.');
+    }})
+    
+    
+  }
+
+  handleNavigate(data:string){
     this.closeNewGroupModal();
-    })
-    
-    
+    this.showSuccessModal=false
+    this.routes.navigate([data]);
+
   }
 }

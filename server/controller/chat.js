@@ -76,15 +76,19 @@ const CreateGroupChat = async (req, res) => {
         }
         users.push(req.id)
 
+        const groupChat = await Chat.create({
+            chatName: req.body.chatName,
+            users: users,
+            isGroupChat: true,
+            groupAdmin: [req.id],
+            groupCreator: req.id
+        })
+        // Only set groupImage if provided; otherwise, the schema default will be used
+        if (req.body.groupImage) {
+            groupChat.groupImage = req.body.groupImage;
+        }
+
         try {
-            const groupChat = await Chat.create({
-                chatName: req.body.chatName,
-                users: users,
-                isGroupChat: true,
-                groupAdmin: [req.id],
-                groupImage: req.body.groupImage,
-                groupCreator:req.id
-            })
             const fullChat = await Chat.findOne({ _id: groupChat._id }).populate("users", "-password").populate("groupAdmin", "-password")
             res.status(200).json({ status: 200, message: 'Group chat created successfully', chat: fullChat });
         } catch (error) {
@@ -156,7 +160,7 @@ const AddMultipleGroupAdmin = async (req, res) => {
     }
 }
 
-const RemoveFromGroupAdmin =async(req,res) => {
+const RemoveFromGroupAdmin = async (req, res) => {
     try {
         const { chatId, userId } = req.body;
         const updatedChat = await Chat.findByIdAndUpdate(chatId, { $pull: { groupAdmin: userId } }, { new: true }).populate("users", "-password").populate("groupAdmin", "-password")
@@ -171,4 +175,4 @@ const RemoveFromGroupAdmin =async(req,res) => {
 
 }
 
-module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin,RemoveFromGroupAdmin}
+module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin, RemoveFromGroupAdmin }

@@ -16,6 +16,7 @@ export class RegisterComponent implements OnInit{
   errorObj: { [key: string]: string } = {};
   defaultAvatarIcon = './assets/icons/avatar.webp';
   avatar: File | null = null;
+  showModal: boolean = false;
 
   constructor(private fb: FormBuilder,private registrationService:ApilistService,private router:Router) {
     // Initialize the form with form controls and validators
@@ -68,7 +69,8 @@ Object.keys(this.registerForm.controls).forEach((key)=>{
       this.registrationService.isRegister(formObject).subscribe(res=>{
         if(res.status===200){
           this.registerForm.reset();
-          this.router.navigate(['/login']);
+          // create a successful registration modal
+       this.showModal=true;
         }else{
           this.errorObj['global']=res.message||'Registration Failed';
         }
@@ -117,6 +119,12 @@ Object.keys(this.registerForm.controls).forEach((key)=>{
       inputElement.focus();
     }
   }
+
+  handleNavigate(data:string){
+    this.router.navigate([`/${data}`]);
+  }
+
+  
 
   
 

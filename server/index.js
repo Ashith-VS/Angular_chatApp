@@ -36,6 +36,9 @@ io.on('connection', (socket) => {
     socket.on('setup', (userData) => {
         console.log('userData._id', userData._id)
         socket.join(userData._id)
+        socket.userId = userData._id; // Store userId on the socket instance
+         // Emit online status to all users
+         io.emit('userStatus', { userId: userData._id, status: 'online' });
         socket.emit('connected')
     })
 
@@ -54,9 +57,20 @@ io.on('connection', (socket) => {
             socket.in(user._id).emit('messageReceived', message)
         })
     })
+
+
+
+
+
     // Handle client disconnection
     socket.on('disconnect', () => {
         console.log('User disconnected');
+
+      // Emit offline status to all users
+      console.log('socket.userId:disconnect ', socket.userId);
+      if (socket.userId) {
+      io.emit('userStatus', { userId: socket.userId, status: 'offline' });
+      }
 
     });
 
