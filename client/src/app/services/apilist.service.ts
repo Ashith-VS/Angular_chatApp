@@ -93,5 +93,10 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'put'})
   }
 
+  updateGroupImage(data:any){
+    const url='/api/chat/groupImg';
+    return this.networkService.networkRequest({url,method:'put',data})
+  }
+
 
 }

@@ -117,6 +117,25 @@ const RenameGroup = async (req, res) => {
     }
 }
 
+const ChangeGroupImage = async (req, res) => {
+    try {
+        const { chatId,groupImage  } = req.body;
+        console.log(' req.body: ',  req.body);
+        if (!chatId || !groupImage) {
+            return res.status(400).json({ status: 400, message: 'Chat ID and chatImage are required' });
+        }
+        const Updatedchat = await Chat.findByIdAndUpdate(chatId, { groupImage }, { new: true }).populate("users", "-password").populate("groupAdmin", "-password")
+        if (!Updatedchat) {
+            return res.status(404).json({ status: 404, message: 'Chat not found' });
+        }
+        res.status(200).json({ status: 200, message: 'Group chat renamed successfully', chat: Updatedchat });
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 500, message: error.message }); 
+    }
+}
+
 const AddtoGroup = async (req, res) => {
     try {
         const { chatId, userId } = req.body;
@@ -175,4 +194,4 @@ const RemoveFromGroupAdmin = async (req, res) => {
 
 }
 
-module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin, RemoveFromGroupAdmin }
+module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin, RemoveFromGroupAdmin,ChangeGroupImage}

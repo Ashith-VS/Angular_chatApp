@@ -29,16 +29,28 @@ const io = socketIo(server, {
     }
 })
 
+// Use a Set to track online users
+const onlineUsers = new Set();
+let previousOnlineUsers = [];
 
 io.on('connection', (socket) => {
     console.log("Connected to socket.io")
 
     socket.on('setup', (userData) => {
-        console.log('userData._id', userData._id)
         socket.join(userData._id)
         socket.userId = userData._id; // Store userId on the socket instance
-         // Emit online status to all users
-         io.emit('userStatus', { userId: userData._id, status: 'online' });
+        onlineUsers.add(userData._id); // Add user to online users
+        // Emit online status to all users
+        //  io.emit('userStatus', { userId: userData._id, status: 'online' });
+        // Emit the updated list of online users to everyone
+        // io.emit('userStatus', Array.from(onlineUsers));
+        const newOnlineUsers = Array.from(onlineUsers);
+        // Check if the online users list has changed before emitting
+        if (JSON.stringify(previousOnlineUsers) !== JSON.stringify(newOnlineUsers)) {
+            io.emit('userStatus', newOnlineUsers);
+            previousOnlineUsers = newOnlineUsers; // Update the previous state
+        }
+        console.log('onlineUsers after setup:', newOnlineUsers);
         socket.emit('connected')
     })
 
@@ -66,11 +78,23 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('User disconnected');
 
-      // Emit offline status to all users
-      console.log('socket.userId:disconnect ', socket.userId);
-      if (socket.userId) {
-      io.emit('userStatus', { userId: socket.userId, status: 'offline' });
-      }
+        // Emit offline status to all users
+        console.log('socket.userId:disconnect ', socket.userId);
+        if (socket.userId) {
+            onlineUsers.delete(socket.userId); // Remove user from online users
+            //   io.emit('userStatus', { userId: socket.userId, status: 'offline' });
+            // Emit the updated list of online users to everyone
+            // 
+            const newOnlineUsers = Array.from(onlineUsers);
+
+            // Check if the online users list has changed before emitting
+            if (JSON.stringify(previousOnlineUsers) !== JSON.stringify(newOnlineUsers)) {
+                io.emit('userStatus', newOnlineUsers);
+                previousOnlineUsers = newOnlineUsers; // Update the previous state
+            }
+
+            console.log('onlineUsers after disconnect:', newOnlineUsers);
+        }
 
     });
 

@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ApilistService } from '../../services/apilist.service';
 import { chatModel, User, userModel, userSearchModel } from '../../models/user.model';
@@ -7,17 +7,21 @@ import { CommonModule, Location } from '@angular/common';
 import { SocketService } from '../../services/socket.service';
 import { ToastrService } from 'ngx-toastr';
 import { isEmpty } from 'lodash';
+import { PickerComponent } from '@ctrl/ngx-emoji-mart';
+import { Firestore } from '@angular/fire/firestore';
 
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ReactiveFormsModule,FormsModule,CommonModule],
+  imports: [ReactiveFormsModule,FormsModule,CommonModule,PickerComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
+  @ViewChild('dropdownContainer') dropdownContainer!:ElementRef;
   @ViewChild('scrollableDiv') scrollableDiv !: ElementRef;
+  @ViewChild('fileInput') fileInput: ElementRef| null = null; 
 
   
   form : FormGroup;
@@ -46,12 +50,26 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   changePasswordSuccessModal:boolean = false;
   logoutModal:boolean = false;
   onlineUsers :any=[]; 
+  emojiToggle:boolean = false
+  logoutSuccessModal:boolean=false
+  uploadedFileURL: string=""
 
 
-  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location,private toast:ToastrService){
+
+
+  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location,private toast:ToastrService,private storage:Firestore){
     this.form= this.fb.group({
       message:""
     })
+  }
+
+    // Detect clicks outside the dropdown
+  @HostListener('document:click',['$event.target'])
+  public onClick(targetElement:HTMLElement):void{
+    const clickedInside = this.dropdownContainer.nativeElement.contains(targetElement);
+    if(!clickedInside&& this.isDropdownVisible){
+      this.isDropdownVisible=false
+    }
   }
 
   ngOnInit(): void {
@@ -71,19 +89,16 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
 
     this.socketService.userStatus().subscribe((res:any)=>{
+      this.isUserOnline(res);
       console.log("received user status: ", res);
-      if (res.status === 'online') {
-        this.onlineUsers.push(res.userId);  
-      } else if (res.status === 'offline') {
-        this.onlineUsers.pop(res.userId);  
-      }
+        this.onlineUsers.push(...res);  
       this.cdr.detectChanges();  // Ensure UI updates with new status
-      console.log('this.onlineUsers: ', this.onlineUsers);
     })
   }
 
    // Check if the user is online
    isUserOnline(userId: string): boolean {
+
     return this.onlineUsers.includes(userId);  // Check if the user is in the onlineUsers set
   }
 
@@ -91,7 +106,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     this.homeService.getAllChats().subscribe((res)=>{
       this.chats=res.chats
       this.cdr.detectChanges();
-      // console.log('res.chats: ', res.chats);
     })
   }
 
@@ -111,16 +125,12 @@ handleSubmit(){
     chatId: this.selectedChat._id,
     content: this.form.value.message
   }
-
 this.homeService.sendMessages(data).subscribe(res=>{
 this.socketService.sendMessage(res.message)
 this.messages=[...this.messages,res.message]
-console.log('this.messages: ', this.messages);
 this.form.get('message')?.setValue('')
 this.fetchAllChats()
-
 })
-// this.fetchAllMessages()
 }
 
 handleSearch(e:Event){
@@ -274,6 +284,7 @@ handleRename(){
   this.homeService.renameGroupChat(data).subscribe(res=>{
     this.selectedChat=res.chat;
     this.fetchAllMessages()
+    this.fetchAllChats()
     this.groupChatName=''
   })
 }
@@ -343,6 +354,29 @@ handleAvatar(e:Event):void{
     const reader = new FileReader();
     reader.onload = (e:any) => {
       this.currentUser.avatar = e.target.result;
+      // console.log('this.currentUser.avatar: ', this.currentUser.avatar);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+handleGroupAvatar(e:Event):void{
+  const file=(e.target as HTMLInputElement).files?.[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = (e:any) => {
+      this.selectedChat.groupImage = e.target.result;
+      console.log('this.selectedChat.groupImage: ', this.selectedChat.groupImage);
+      if(this.selectedChat.groupImage){
+        const data={
+          chatId: this.selectedChat._id,
+          groupImage: this.selectedChat.groupImage,
+        }
+        this.homeService.updateGroupImage(data).subscribe(res=>{
+          console.log('updateGroupImage: ', res.chat);
+        })
+      }
+      // this.currentUser.avatar = e.target.result;
       // console.log('this.currentUser.avatar: ', this.currentUser.avatar);
     };
     reader.readAsDataURL(file);
@@ -489,12 +523,46 @@ handleConfirmDeleteAccount(){
   this.homeService.deleteAccount().subscribe(res=>{
     this.toast.success('User deleted successfully');
     localStorage.removeItem('token');
-    this.router.navigate(['/login']);
+    // show logout success modal
+    this.logoutSuccessModal=true;
+    // this.router.navigate(['/login']);
   })
 
 }
 
+handleEmojiToggle(){
+  this.emojiToggle=!this.emojiToggle;
+}
+
+addEmoji(e:any){
+  // console.log('e: ', e.emoji);
+  const emoji = e.emoji.native; // Emoji character
+  this.form.get('message')?.setValue(this.form.value.message + emoji)
+  this.emojiToggle=false;
+}
+
+openFileDialog() {
+  if (this.fileInput) {
+  this.fileInput.nativeElement.click(); // Programmatically click the file input
+  }
+}
+
+handleFileChange(e:Event){
+  console.log('e: ', e);
+  const file=(e.target as HTMLInputElement).files?.[0];
+  console.log('file444: ', file);
+  if (file) {
+    const filePath = `uploadsAngular/${file.name}`;
+    console.log('filePath: ', filePath);
+    // const fileRef = this.storage.ref(filePath);
+    // const task = this.storage.upload(filePath, file);
+  }
   
+}
+
+handleMic(){
+
+}
 
 
 
