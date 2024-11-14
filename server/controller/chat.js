@@ -4,7 +4,7 @@ const User = require("../model/userModel");
 const AccessChat = async (req, res) => {
     try {
         const { chatId } = req.body;
-        // console.log('req.body: ', req.body);
+
         if (!chatId) {
             return res.status(400).json({ status: 400, message: 'Chat ID is required' });
         }
@@ -19,7 +19,7 @@ const AccessChat = async (req, res) => {
             path: "latestMessage.sender",
             select: "username avatar email"
         })
-        // console.log('chat777: ', chat);
+
         if (chat.length > 0) {
             res.status(200).json({ status: 200, message: 'Chat accessed successfully', chat: chat[0] });
         } else {
@@ -43,7 +43,6 @@ const AccessChat = async (req, res) => {
 }
 
 const FetchChats = async (req, res) => {
-    // console.log('req.id: ', req.id);
     try {
         Chat.find({ users: { $elemMatch: { $eq: req.id } } })
             .populate("users", "-password")
@@ -65,11 +64,9 @@ const FetchChats = async (req, res) => {
 
 const CreateGroupChat = async (req, res) => {
     try {
-        // console.log(' req.body: ',  req.body);
         if (!req.body.chatName || !req.body.users) {
             return res.status(400).json({ status: 400, message: 'All fields are required ' });
         }
-        // console.log('req.body.users: ', req.body.users.length);
         let users = req.body.users
         if (users.length < 2) {
             return res.status(400).json({ status: 400, message: 'At least two users are required in a group chat' });
@@ -102,7 +99,6 @@ const CreateGroupChat = async (req, res) => {
 const RenameGroup = async (req, res) => {
     try {
         const { chatId, chatName } = req.body;
-        // console.log('req.body: ', req.body);
         if (!chatId || !chatName) {
             return res.status(400).json({ status: 400, message: 'Chat ID and new chat name are required' });
         }
@@ -119,8 +115,7 @@ const RenameGroup = async (req, res) => {
 
 const ChangeGroupImage = async (req, res) => {
     try {
-        const { chatId,groupImage  } = req.body;
-        console.log(' req.body: ',  req.body);
+        const { chatId, groupImage } = req.body;
         if (!chatId || !groupImage) {
             return res.status(400).json({ status: 400, message: 'Chat ID and chatImage are required' });
         }
@@ -129,10 +124,10 @@ const ChangeGroupImage = async (req, res) => {
             return res.status(404).json({ status: 404, message: 'Chat not found' });
         }
         res.status(200).json({ status: 200, message: 'Group chat renamed successfully', chat: Updatedchat });
-        
+
     } catch (error) {
         console.error(error);
-        res.status(500).json({ status: 500, message: error.message }); 
+        res.status(500).json({ status: 500, message: error.message });
     }
 }
 
@@ -153,7 +148,6 @@ const AddtoGroup = async (req, res) => {
 const RemoveFromGroup = async (req, res) => {
     try {
         const { chatId, userId } = req.body;
-        // console.log('userId: ', userId);
         const removedUsers = await Chat.findByIdAndUpdate(chatId, { $pull: { users: userId } }, { new: true }).populate("users", "-password").populate("groupAdmin", "-password")
         if (!removedUsers) {
             return res.status(404).json({ status: 404, message: 'Chat not found' });
@@ -194,4 +188,4 @@ const RemoveFromGroupAdmin = async (req, res) => {
 
 }
 
-module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin, RemoveFromGroupAdmin,ChangeGroupImage}
+module.exports = { AccessChat, FetchChats, CreateGroupChat, RenameGroup, AddtoGroup, RemoveFromGroup, AddMultipleGroupAdmin, RemoveFromGroupAdmin, ChangeGroupImage }

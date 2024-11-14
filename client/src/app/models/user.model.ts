@@ -52,7 +52,15 @@ export interface userModel {
     content: string;
     createdAt: string;
     updatedAt: string;
+    attachments: Attachment[];
     __v: number;
+  }
+
+  export interface Attachment {
+    _id: string;
+    url: string;
+    fileName: string;
+    fileType: string;
   }
   export interface chatModel {
     _id: string;

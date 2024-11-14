@@ -56,14 +56,12 @@ Object.keys(this.loginForm.controls).forEach((key)=>{
       },
     (error) => {
         // Handle error responses like 400 or 500
-        // console.log("Error response45: ", error);
         this.errorObj['general'] = error.message || 'An error occurred during login';
     }
   )
     }else{
       setTimeout(() => {
         const firstErrorElement = document.querySelector(".error")as HTMLElement;
-        console.log('firstErrorElement: ', firstErrorElement);
         if (firstErrorElement) {
           firstErrorElement.focus();
         }

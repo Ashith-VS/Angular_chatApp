@@ -8,9 +8,14 @@ import { SocketService } from '../../services/socket.service';
 import { ToastrService } from 'ngx-toastr';
 import { isEmpty } from 'lodash';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
-import { Firestore } from '@angular/fire/firestore';
+import { collection, collectionData, Firestore } from '@angular/fire/firestore';
+import { getDownloadURL, ref, uploadBytesResumable, Storage } from '@angular/fire/storage';
+import { Observable } from 'rxjs';
 
-
+interface Item {
+  name: string;
+  fileUrl?: string; // URL of the uploaded file
+}
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -18,6 +23,8 @@ import { Firestore } from '@angular/fire/firestore';
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
+
+
 export class HomeComponent implements OnInit, AfterViewChecked {
   @ViewChild('dropdownContainer') dropdownContainer!:ElementRef;
   @ViewChild('scrollableDiv') scrollableDiv !: ElementRef;
@@ -53,14 +60,23 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   emojiToggle:boolean = false
   logoutSuccessModal:boolean=false
   uploadedFileURL: string=""
+  item$: Observable<Item[]>;
+  isImageModalOpen:boolean = false
+  selectedImageUrl: string | null = null;
+  isRecording = false; 
+  mediaRecorder:MediaRecorder | null = null; // Store the MediaRecorder instance
+  audioChunks: Blob[] = []; // Store audio chunks for recording
+  audioUrl: string = '';
+  isdropdownFileToggle: boolean = false;
+  fileAcceptType: string = 'image/*,video/*';
 
 
-
-
-  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location,private toast:ToastrService,private storage:Firestore){
+  constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location,private toast:ToastrService,private firestore:Firestore,private storage:Storage){
     this.form= this.fb.group({
       message:""
     })
+    const itemsCollection = collection(firestore, 'items');
+    this.item$ = collectionData(itemsCollection) as Observable<Item[]>;
   }
 
     // Detect clicks outside the dropdown
@@ -71,6 +87,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
       this.isDropdownVisible=false
     }
   }
+
 
   ngOnInit(): void {
     this.homeService.isCurrrentUser().subscribe((res:any)=>{
@@ -90,7 +107,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     this.socketService.userStatus().subscribe((res:any)=>{
       this.isUserOnline(res);
-      console.log("received user status: ", res);
+      // console.log("received user status: ", res);
         this.onlineUsers.push(...res);  
       this.cdr.detectChanges();  // Ensure UI updates with new status
     })
@@ -98,13 +115,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
    // Check if the user is online
    isUserOnline(userId: string): boolean {
-
+    //  console.log('this.onlineUsers.includes(userId): ', this.onlineUsers.includes(userId));
     return this.onlineUsers.includes(userId);  // Check if the user is in the onlineUsers set
   }
 
   fetchAllChats(): void {
     this.homeService.getAllChats().subscribe((res)=>{
       this.chats=res.chats
+      console.log('this.chats: ', this.chats);
       this.cdr.detectChanges();
     })
   }
@@ -153,7 +171,7 @@ handleSelectUser(user:any){
 
 handleSelectChat(user:any){
   this.selectedChat=user;
-  console.log('this.selectedChat: ', this.selectedChat);
+  // console.log('this.selectedChat: ', this.selectedChat);
   this.fetchAllMessages()
 }
 
@@ -161,6 +179,7 @@ fetchAllMessages(){
   if(!this.selectedChat)return;
   this.homeService.fetchAllMessages(this.selectedChat?._id).subscribe(res=>{
     this.messages=res.messages;
+    // console.log(' this.messages: ',  this.messages);
     // this.fetchAllChats()
   })
   this.socketService.joinRoom(this.selectedChat._id)
@@ -307,7 +326,7 @@ handleRemove(user:any){
     chatId: this.selectedChat._id,
     userId: user._id,
   }
-  console.log('data: ', data);
+
   this.homeService.leaveGroupChat(data).subscribe(res=>{
     // console.log('leaveGroupChat: ', res.chat);
 
@@ -366,14 +385,14 @@ handleGroupAvatar(e:Event):void{
     const reader = new FileReader();
     reader.onload = (e:any) => {
       this.selectedChat.groupImage = e.target.result;
-      console.log('this.selectedChat.groupImage: ', this.selectedChat.groupImage);
+      // console.log('this.selectedChat.groupImage: ', this.selectedChat.groupImage);
       if(this.selectedChat.groupImage){
         const data={
           chatId: this.selectedChat._id,
           groupImage: this.selectedChat.groupImage,
         }
         this.homeService.updateGroupImage(data).subscribe(res=>{
-          console.log('updateGroupImage: ', res.chat);
+          // console.log('updateGroupImage: ', res.chat);
         })
       }
       // this.currentUser.avatar = e.target.result;
@@ -541,27 +560,243 @@ addEmoji(e:any){
   this.emojiToggle=false;
 }
 
-openFileDialog() {
-  if (this.fileInput) {
+openFileDialog(type: string) {
+  if (this.fileInput && type === 'gallery' ) {
+    this.fileAcceptType = 'image/*,video/*'
   this.fileInput.nativeElement.click(); // Programmatically click the file input
+  }else if(this.fileInput && type === 'document'){
+    this.fileAcceptType = ''; // Accept all file types for documents
+    this.fileInput.nativeElement.click();
   }
 }
 
-handleFileChange(e:Event){
-  console.log('e: ', e);
-  const file=(e.target as HTMLInputElement).files?.[0];
-  console.log('file444: ', file);
-  if (file) {
-    const filePath = `uploadsAngular/${file.name}`;
-    console.log('filePath: ', filePath);
-    // const fileRef = this.storage.ref(filePath);
-    // const task = this.storage.upload(filePath, file);
-  }
+handleFileChange(e:Event,type:string){
+//   const file=(e.target as HTMLInputElement).files?.[0];
+//   if (file ) {
+//     this.isdropdownFileToggle=false; 
+//     const filePath = `uploadsAngular/${file.name}`;
+//     const storageRef = ref(this.storage, filePath);
+
+//      // Upload the file
+//      const uploadTask = uploadBytesResumable(storageRef, file);
+
+//     uploadTask.on(
+//       'state_changed',
+//       (snapshot) => {
+//         // Handle progress
+//         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+//         console.log(`Upload is ${progress}% done`);
+//       },
+//       (error) => {
+//         console.error('File upload failed:', error);
+//       },
+//       async() => {
+//            // On successful upload, get the file URL
+//            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+//           //  console.log('downloadURL: ', downloadURL);
+//            const data={
+//             chatId: this.selectedChat._id,
+//             attachments :[{
+//               url: downloadURL,
+//               fileType: type === '' ? 'document' : file.type.split('/')[0], // E.g., 'image', 'video'
+//               fileName: file.name
+//             }]
+//            }
+//         this.homeService.uploadAttachments(data).subscribe(res=>{
+//           // console.log('res: ', res);
+//           this.socketService.sendMessage(res.message)
+// this.messages=[...this.messages,res.message]
+// this.form.get('message')?.setValue('')
+// this.fetchAllChats()
+//         })
+
+//       }
+//     );
+//   }
+
+
+const files = (e.target as HTMLInputElement).files;
   
+  if (files && files.length > 0) {
+    this.isdropdownFileToggle = false; 
+    
+    // Create an array to store the file upload promises
+    const uploadPromises:any = [];
+
+    // Loop through all files and upload each one
+    Array.from(files).forEach((file) => {
+      const filePath = `uploadsAngular/${file.name}`;
+      const storageRef = ref(this.storage, filePath);
+
+      // Create the file upload promise
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      const uploadPromise = new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            // Handle progress
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload is ${progress}% done`);
+          },
+          (error) => {
+            reject(error); // Reject the promise if there's an error
+            console.error('File upload failed:', error);
+          },
+          async () => {
+            // On successful upload, get the file URL
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadURL);
+            } catch (error) {
+              reject(error);
+            }
+          }
+        );
+      });
+
+      // Push the promise to the array
+      uploadPromises.push(uploadPromise);
+    });
+
+    // Wait for all files to be uploaded
+    Promise.all(uploadPromises)
+      .then((downloadURLs) => {
+        // After all uploads are complete, prepare data to send
+        const attachments = downloadURLs.map((url, index) => ({
+          url: url,
+          fileType: type === '' ? 'document' : files[index].type.split('/')[0], // E.g., 'image', 'video'
+          fileName: files[index].name
+        }));
+
+        const data = {
+          chatId: this.selectedChat._id,
+          attachments: attachments
+        };
+
+        // Call your service to upload the attachments
+        this.homeService.uploadAttachments(data).subscribe((res) => {
+          // Handle the response, e.g., updating messages
+          this.socketService.sendMessage(res.message);
+          this.messages = [...this.messages, res.message];
+          this.form.get('message')?.setValue('');
+          this.fetchAllChats();
+        });
+      })
+      .catch((error) => {
+        console.error('Error uploading files:', error);
+      });
+  }
+
 }
+
+
+openImageModal(imageUrl: string): void {
+  this.selectedImageUrl = imageUrl;
+  this.isImageModalOpen = true;
+}
+
+closeImageModal(): void {
+  this.isImageModalOpen = false;
+  this.selectedImageUrl = null;
+}
+
 
 handleMic(){
+  if(this.isRecording){
+    this.stopRecording();
+  }else{
+    this.startRecording();
+  }
+}
 
+
+startRecording() {
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      this.mediaRecorder = new MediaRecorder(stream);
+      this.audioChunks = []; // Empty the array before starting the recording
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        } else {
+          console.log('No data available in event');
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        // this.audioUrl = URL.createObjectURL(audioBlob);  // Create URL for the recorded audio
+        // console.log('Recording stopped. Audio URL: ', this.audioUrl);
+        this.uploadAudioToFirebase(audioBlob);
+      };
+
+      this.mediaRecorder.start();
+      this.isRecording = true; // Mark recording as in progress
+      console.log('Recording started...');
+    }).catch((error) => {
+      console.error('Error accessing microphone: ', error);
+    });
+  } else {
+    console.error('MediaDevices or getUserMedia not supported');
+  }
+}
+
+uploadAudioToFirebase(audioBlob: Blob) {
+  const timestamp = new Date().getTime();
+  const fileName = `audio_${timestamp}.wav`;
+  const fileType = audioBlob.type || 'audio/wav'; 
+
+  const audioRef = ref(this.storage, `audio/${timestamp}.wav`);
+  const uploadTask = uploadBytesResumable(audioRef, audioBlob);
+
+  uploadTask.on('state_changed', 
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      console.log(`Upload is ${progress}% done`);
+      // Track upload progress here (optional)
+    }, 
+    (error) => {
+      console.error('Error uploading audio:', error);
+    }, 
+    () => {
+      // Get download URL when the upload is complete
+      getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+        // console.log('downloadURL: ', downloadURL);
+        const data={
+          chatId: this.selectedChat._id,
+          attachments:[{
+            url: downloadURL,
+            fileType: fileType.split('/')[0],
+            fileName:fileName,
+          }]
+        }
+         this.homeService.uploadAttachments(data).subscribe(res=>{
+    // console.log('res: ', res);
+    this.socketService.sendMessage(res.message)
+    this.messages=[...this.messages,res.message]
+this.form.get('message')?.setValue('')
+this.fetchAllChats()
+  })
+       
+      });
+    });
+}
+
+
+stopRecording(){
+  if (this.mediaRecorder) {
+    this.mediaRecorder.stop(); // Stop the recorder
+      // Stop all tracks of the media stream (to release the microphone)
+      if (this.mediaRecorder.stream) {
+        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+    this.isRecording = false; // Mark recording as stopped
+  }
+}
+
+toggleDropdown() {
+  this.isdropdownFileToggle = !this.isdropdownFileToggle
 }
 
 

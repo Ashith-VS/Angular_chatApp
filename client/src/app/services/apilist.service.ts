@@ -98,5 +98,10 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'put',data})
   }
 
+  uploadAttachments(data:any){
+    const url='/api/message/attachments';
+    return this.networkService.networkRequest({url,method:'post',data})
+  }
+
 
 }

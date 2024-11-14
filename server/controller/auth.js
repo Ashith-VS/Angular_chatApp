@@ -89,14 +89,14 @@ const ChangePassword = async (req, res) => {
         await user.save();
         res.status(200).json({ status: true, message: 'Password changed successfully' });
     } catch (error) {
-        console.log('error: ', error.message);
+        // console.log('error: ', error.message);
         res.status(500).json({ message: 'Error changing password' })
     }
 }
 
 const isDeleteAccount =async(req,res)=>{
     try{
-        console.log('req.id: ', req.id);
+        // console.log('req.id: ', req.id);
            // Step 1: Find all groups where the current user is an admin
            const groupsWithUserAsAdmin = await Chat.find({ 
             $or: [{ groupAdmin: req.id }, { groupCreator: req.id }],
@@ -138,7 +138,7 @@ const isDeleteAccount =async(req,res)=>{
 
             // Update the group with the new admin
             await group.save();
-            console.log('group: ', group);
+            // console.log('group: ', group);
         }
 
  // Step 3: Update the user status to 'INACTIVE'

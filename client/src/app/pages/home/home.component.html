@@ -4,7 +4,6 @@
         <div class="col-3 vh-100 ">
             <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary p-4"
                 style="height: 100%;">
-
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
                     <span class="fs-5 fw-semibold">Chat App</span>
                     <div class="d-flex align-items-center  position-relative" #dropdownContainer
@@ -22,13 +21,11 @@
                     </div>
                 </div>
 
-
                 <!-- searchbar -->
                 <form class="m-2 p-2" (submit)="handleSearch($event)">
                     <input type="text" [(ngModel)]="searchTerm" name="search" (input)="handleSearch($event)"
                         class="form-control" placeholder="Search...">
                 </form>
-
 
                 <div class="list-group list-group-flush border-bottom scrollable-area">
                     <!-- search list -->
@@ -55,7 +52,6 @@
                     </div>
                     }
                     }
-
                     <!-- contact list -->
                     <span>Chats:</span>
                     @for (chat of chats; track $index) {
@@ -76,10 +72,23 @@
                             : '')
                             : (chat.latestMessage.content || '')
                             }}
+                            @if(chat.latestMessage.attachments.length > 0){
+                            @if(chat.latestMessage.attachments[0].fileType=== 'image'){
+                            <span>Image</span>
+                            }
+                            @else if(chat.latestMessage.attachments[0].fileType === 'video'){
+                            <span>Video</span>
+                            }
+                            @else if(chat.latestMessage.attachments[0].fileType === 'document'){
+                            <span>Document</span>
+                            }
+                            @else if(chat.latestMessage.attachments[0].fileType === 'audio'){
+                            <span>Audio</span>
+                            }
+                            }
                         </div>
                     </div>
                     }
-
                 </div>
             </div>
         </div>
@@ -135,8 +144,49 @@
                                 <br>
                                 }
                                 {{ msg?.content }}
+                                @if(msg.attachments && msg.attachments.length > 0){
+                                <div class="attachments mt-2">
+                                    @for(attachment of msg.attachments;track $index ){
+                                    <!-- Display image attachments -->
+                                    @if(attachment.fileType === 'image'){
+                                    <img [src]="attachment.url" alt="{{ attachment.fileName }}" class="img-thumbnail"
+                                        width="150" height="200" (click)="openImageModal(attachment.url)">
+                                    }
+                                    <!-- Display video attachments -->
+                                    @if(attachment.fileType === 'video'){
+                                    <video [src]="attachment.url" controls class="video-thumbnail" width="200"
+                                        height="200"></video>
+                                    }
+                                    <!--Display Documents attachments  -->
+                                    @if(attachment.fileType === 'document'){
+                                    <div class="document-thumbnail">
+                                        <a href="{{attachment.url}}" target="_blank" class="download-btn" download>
+                                            <img src="./assets/icons/document.png" alt="Document Icon"
+                                                class="document-icon">
+                                            <div class="document-details">
+                                                <span class="document-name">{{ attachment.fileName }}</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    }
+                                    <!-- Display audio attachments -->
+                                    @if(attachment.fileType === 'audio'){
+                                    <audio controls class="audio-thumbnail" [src]="attachment.url" width="200"
+                                        height="100"></audio>
+                                    }
+                                    }
+                                </div>
+                                }
                             </div>
                         </div>
+                        <!-- Modal for Fullscreen Image -->
+                        @if(isImageModalOpen){
+                        <div class="modal-backdrop" (click)="closeImageModal()">
+                            <div class="modal-dialog-centered">
+                                <img [src]="selectedImageUrl" class="img-fluid" alt="Full Size Image">
+                            </div>
+                        </div>
+                        }
                     </div>
                 </div>
                 }
@@ -156,12 +206,27 @@
                         class="icon emoji-icon" />
 
                     <!-- Plus Icon for File Upload -->
-                    <img src="./assets/icons/plus.png" alt="Attach" class="icon attach-icon"
-                        (click)="openFileDialog()" />
+                    <div class="dropdown">
+                        <img src="./assets/icons/plus.png" alt="Attach" class="icon attach-icon"
+                            (click)="toggleDropdown()" />
+
+                        <!-- Dropdown Menu -->
+                        @if(isdropdownFileToggle){
+                        <div class="dropdown-menus">
+                            <button class="dropdown-items" (click)="openFileDialog('gallery')">
+                                <img src="./assets/icons/gallery.png" alt="Camera" class="dropdown-icon" /> Photos &
+                                videos
+                            </button>
+                            <button class="dropdown-items" (click)="openFileDialog('document')">
+                                <img src="./assets/icons/document.png" alt="Document" class="dropdown-icon" /> Document
+                            </button>
+                        </div>
+                        }
+                    </div>
 
                     <!-- Hidden File Input for Attachments -->
-                    <input #fileInput type="file" accept="image/*,video/*" (change)="handleFileChange($event)"
-                        style="display: none;" />
+                    <input #fileInput type="file" [accept]='fileAcceptType' multiple
+                        (change)="handleFileChange($event, fileAcceptType)" style="display: none;" />
 
                     <!-- Text Input Field -->
                     <input type="text" formControlName="message" class="form-control message-input"
@@ -173,7 +238,8 @@
                     </button>
 
                     <!-- Mic Icon for Voice Messages -->
-                    <!-- <img src="./assets/icons/mic.png" alt="Voice" class="icon mic-icon" (click)="handleMic()" /> -->
+                    <img [src]="isRecording?'./assets/icons/micon.png' : './assets/icons/mic.png' " alt="Voice"
+                        class="icon mic-icon" (click)="handleMic()" />
                 </div>
 
                 <!-- Emoji Picker -->
@@ -188,8 +254,6 @@
             </div>
             }
         </div>
-
-
 
 
 
@@ -221,8 +285,6 @@
                             <div class="badge bg-secondary m-2 p-3 position-relative">
                                 <span class="me-2">{{ user.username }}</span>
                                 @if(isGroupAdmin(selectedChat,currentUser)){
-                                <!-- <button type="button" class="btn-close position-absolute top-0 end-0 me-2 mt-1"
-                                    aria-label="Remove user" (click)="handleRemove(user)"></button> -->
                                 <button type="button" class="btn-primary top-0 end-0 me-2 mt-1"
                                     (click)="handleRemoveGroupAdmins(user)">Dismiss as Admin</button>
                                 }
@@ -237,7 +299,6 @@
                                 @if (isGroupAdmin(selectedChat,currentUser)) {
                                 <button type="button" class="btn-close position-absolute top-0 end-0 me-2 mt-1"
                                     aria-label="Remove user" (click)="handleRemove(user)"></button>
-
                                 <button type="button" class="btn-primary top-0 end-0 me-2 mt-1"
                                     (click)="handleAddGroupAdmins(user)">AddGroupAdmins</button>
                                 }
@@ -374,7 +435,6 @@
                                 Profile</button>
                             <button *ngIf="editing" type="button" class="btn btn-secondary"
                                 (click)="cancelEditing()">cancel Editing</button>
-                            <!-- <button type="button" class="btn btn-secondary" (click)="closeProfileModal()">Close</button> -->
                         </div>
                     </div>
                     <div>
@@ -518,7 +578,6 @@
             </div>
         </div>
         }
-
 
     </div>
 </div>

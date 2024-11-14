@@ -7,6 +7,7 @@ import { provideToastr } from 'ngx-toastr';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { firebaseConfig } from './firebase.config';
+import { getStorage, provideStorage } from '@angular/fire/storage';
 
 export const appConfig: ApplicationConfig = {
   providers: [provideHttpClient(),
@@ -20,6 +21,7 @@ export const appConfig: ApplicationConfig = {
     progressBar:true,
   }),
   provideFirebaseApp(()=>initializeApp(firebaseConfig)),
-  provideFirestore(() => getFirestore())
+  provideFirestore(() => getFirestore()),
+  provideStorage(() => getStorage())
 ]
 };

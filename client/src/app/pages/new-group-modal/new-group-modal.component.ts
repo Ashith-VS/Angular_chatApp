@@ -92,7 +92,7 @@ export class NewGroupModalComponent {
 
     this.groupService.createGroupChat(data).subscribe({
     next:  (res)=>{
-      console.log("groupchat44",res)
+      // console.log("groupchat44",res)
       // Clear input field after creating the group
     this.groupName = '';
     this.selectedUsers = [];

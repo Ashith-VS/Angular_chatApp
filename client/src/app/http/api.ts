@@ -53,7 +53,7 @@ export class NetworkService{
         }else{
             // Server-side error
             if (error.status === 401 || error.status === 403) {
-                // this.logout(); // Handle unauthorized access, log the user out
+                this.logout(); // Handle unauthorized access,0r token expired log the user out 
               }
               errorMessage = error.error?.message || errorMessage;
         }

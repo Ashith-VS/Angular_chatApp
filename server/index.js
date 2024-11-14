@@ -42,8 +42,7 @@ io.on('connection', (socket) => {
         onlineUsers.add(userData._id); // Add user to online users
         // Emit online status to all users
         //  io.emit('userStatus', { userId: userData._id, status: 'online' });
-        // Emit the updated list of online users to everyone
-        // io.emit('userStatus', Array.from(onlineUsers));
+       
         const newOnlineUsers = Array.from(onlineUsers);
         // Check if the online users list has changed before emitting
         if (JSON.stringify(previousOnlineUsers) !== JSON.stringify(newOnlineUsers)) {
@@ -69,7 +68,6 @@ io.on('connection', (socket) => {
             socket.in(user._id).emit('messageReceived', message)
         })
     })
-
 
 
 

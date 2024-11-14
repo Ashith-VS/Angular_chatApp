@@ -37,7 +37,7 @@ export class RegisterComponent implements OnInit{
       const reader = new FileReader();
       reader.onload = (e:any) => {
         this.avatar = e.target.result;
-        console.log('this.avatar4: ', this.avatar);
+        // console.log('this.avatar4: ', this.avatar);
       };
       reader.readAsDataURL(file);
     }
@@ -57,7 +57,7 @@ Object.keys(this.registerForm.controls).forEach((key)=>{
     e.preventDefault();
     this.errorObj = {};
     this.handleValidate();
-    console.log('this.registerForm.valid: ', this.registerForm.valid);
+    // console.log('this.registerForm.valid: ', this.registerForm.valid);
     if (this.registerForm.valid) {
       const formObject: any = { ...this.registerForm.value };
  // Add avatar data if present
