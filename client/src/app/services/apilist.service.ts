@@ -103,5 +103,10 @@ export class ApilistService {
     return this.networkService.networkRequest({url,method:'post',data})
   }
 
+  DeleteMessageById(id:string){
+    const url=`/api/message/delete/${id}`;
+    return this.networkService.networkRequest({url})
+  }
+
 
 }

@@ -12,10 +12,12 @@ import { collection, collectionData, Firestore } from '@angular/fire/firestore';
 import { getDownloadURL, ref, uploadBytesResumable, Storage } from '@angular/fire/storage';
 import { Observable } from 'rxjs';
 
+
 interface Item {
   name: string;
   fileUrl?: string; // URL of the uploaded file
 }
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -69,6 +71,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
   audioUrl: string = '';
   isdropdownFileToggle: boolean = false;
   fileAcceptType: string = 'image/*,video/*';
+  isDropdownMessageToggle:{[messageId: string]:boolean}  = {};
 
 
   constructor(private fb: FormBuilder,private router:Router,private homeService:ApilistService,private socketService:SocketService,private cdr: ChangeDetectorRef,private location: Location,private toast:ToastrService,private firestore:Firestore,private storage:Storage){
@@ -123,7 +126,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     this.homeService.getAllChats().subscribe((res)=>{
       this.chats=res.chats
       console.log('this.chats: ', this.chats);
-      this.cdr.detectChanges();
+      this.cdr?.detectChanges();
     })
   }
 
@@ -176,6 +179,7 @@ handleSelectChat(user:any){
 }
 
 fetchAllMessages(){
+  console.log('this.selectedChat: ', this.selectedChat);
   if(!this.selectedChat)return;
   this.homeService.fetchAllMessages(this.selectedChat?._id).subscribe(res=>{
     this.messages=res.messages;
@@ -799,6 +803,20 @@ toggleDropdown() {
   this.isdropdownFileToggle = !this.isdropdownFileToggle
 }
 
+handleDropdownMessage(msgId:string) {
+  this.isDropdownMessageToggle[msgId] =!this.isDropdownMessageToggle[msgId];
+}
+
+
+handleDeleteMessage(id:string){
+  // console.log('id: ', id);
+  this.homeService.DeleteMessageById(id).subscribe(res=>{
+    // console.log('res: ', res);
+    this.fetchAllChats()
+    this.fetchAllMessages()
+  })
+
+}
 
 
 }

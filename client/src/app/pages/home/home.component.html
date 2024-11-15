@@ -58,21 +58,29 @@
                     <div class="list-group-item list-group-item-action  py-3 lh-sm " aria-current="true"
                         style="cursor: pointer;" [class]="{'selected-chat': chat?._id === selectedChat?._id}"
                         (click)="handleSelectChat(chat)">
-                        <div class="d-flex w-100 align-items-center justify-between ">
-                            <img [src]="chat.isGroupChat? chat.groupImage : getOtherUserAvatar(currentUser, chat.users)  "
-                                alt="avatar" class="rounded-circle"
-                                style="width: 40px; height: 40px; margin-right: 10px;" />
-                            <strong class="mb-1">{{chat.isGroupChat?
-                                chat?.chatName:getSender(currentUser,chat?.users)}}</strong>
+
+                        <div class="d-flex w-100 align-items-center justify-content-between ">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <img [src]="chat.isGroupChat? chat.groupImage : getOtherUserAvatar(currentUser, chat.users)  "
+                                    alt="avatar" class="rounded-circle"
+                                    style="width: 40px; height: 40px; margin-right: 10px;" />
+                                <strong class="mb-1">{{chat.isGroupChat?
+                                    chat?.chatName:getSender(currentUser,chat?.users)}}</strong>
+                            </div>
+                            <div class="status"
+                                [class]="{ 'online': chat.isGroupChat ? false : isUserOnline(getSenderfullDetail(currentUser, chat.users).id), 'offline': chat.isGroupChat ? false : !isUserOnline(getSenderfullDetail(currentUser, chat.users).id) }">
+                            </div>
                         </div>
+
                         <div class="col-10 mb-1 small ms-5">
                             {{ chat.isGroupChat
-                            ? (chat.latestMessage.sender.username && chat.latestMessage.content
+                            ? (chat.latestMessage && chat.latestMessage.sender && chat.latestMessage.sender.username &&
+                            chat.latestMessage.content
                             ? chat.latestMessage.sender.username + ': ' + chat.latestMessage.content
                             : '')
-                            : (chat.latestMessage.content || '')
-                            }}
-                            @if(chat.latestMessage.attachments.length > 0){
+                            : (chat.latestMessage && chat.latestMessage.content || '') }}
+
+                            @if(chat?.latestMessage&&chat.latestMessage.attachments.length > 0){
                             @if(chat.latestMessage.attachments[0].fileType=== 'image'){
                             <span>Image</span>
                             }
@@ -87,7 +95,9 @@
                             }
                             }
                         </div>
+
                     </div>
+
                     }
                 </div>
             </div>
@@ -103,14 +113,33 @@
                     <div class="d-flex" style="cursor: pointer;"
                         (click)="(selectedChat?.isGroupChat ? handleOpenModal() : handleShowUserModal())">
                         <!-- Avatar -->
-                        <img [src]="selectedChat.isGroupChat? selectedChat.groupImage : getOtherUserAvatar(currentUser, selectedChat.users)  "
+                        <img [src]="selectedChat.isGroupChat? selectedChat.groupImage : getOtherUserAvatar(currentUser, selectedChat.users)"
                             alt="avatar" class="rounded-circle"
                             style="width: 40px; height: 40px; margin-right: 10px;" />
+
                         <!-- Chat name (Group or user) -->
-                        <strong class="mb-1">{{selectedChat?.isGroupChat? selectedChat?.chatName
-                            :getSender(currentUser,selectedChat?.users)}}</strong>
-                        <!-- Online status -->
                         <div class="status-container">
+                            <!-- @if(!selectedChat.isGroupChat){
+                            <div class="status-dot-container">
+                                <div class="status"
+                                    [class]="{ 'online': selectedChat.isGroupChat ? false : isUserOnline(getSenderfullDetail(currentUser, selectedChat.users).id), 'offline': selectedChat.isGroupChat ? false : !isUserOnline(getSenderfullDetail(currentUser, selectedChat.users).id) }">
+                                </div>
+                            </div>
+                            } -->
+                            <div class="chat-info">
+                                <strong class="mb-1">{{selectedChat?.isGroupChat?
+                                    selectedChat?.chatName:getSender(currentUser,selectedChat?.users)}}</strong>
+                                @if(!selectedChat.isGroupChat){
+                                <span class="status-text"
+                                    [class]="{'online': isUserOnline(getSenderfullDetail(currentUser, selectedChat.users).id), 'offline': !isUserOnline(getSenderfullDetail(currentUser, selectedChat.users).id)}">
+                                    {{ isUserOnline(getSenderfullDetail(currentUser, selectedChat.users).id) ? 'Online'
+                                    : 'Offline' }}
+                                </span>
+                                }
+                            </div>
+                        </div>
+                        <!-- Online status -->
+                        <!-- <div class="status-container">
                             @if(!selectedChat.isGroupChat){
                             @if(isUserOnline(getSenderfullDetail(currentUser,selectedChat.users).id)){
                             <span class="status online">Online</span>
@@ -119,7 +148,7 @@
                             <span class="status offline">Offline</span>
                             }
                             }
-                        </div>
+                        </div> -->
                     </div>
                     <!-- Info button -->
                     <div class="ms-auto d-flex align-items-center">
@@ -139,6 +168,15 @@
                         <div class="d-flex" [ngClass]="{'flex-row-reverse': msg?.sender?._id === currentUser._id}">
                             <div class="alert"
                                 [ngClass]="{'alert-primary': msg?.sender?._id !== currentUser._id, 'alert-secondary': msg?.sender?._id === currentUser._id}">
+                                <img src="./assets/icons/arrowDown.png" alt="icon" class="imgicon arrow-down-btn"
+                                    (click)="handleDropdownMessage(msg._id)">
+
+                                @if(isDropdownMessageToggle[msg._id]){
+                                <ul class="dropdown-menuss" aria-labelledby="dropdownMenuButton">
+                                    <li><a class="dropdown-item" (click)="handleDeleteMessage(msg._id)">Delete</a></li>
+                                    <!-- <li><a class="dropdown-item" (click)="handleEditMessage(msg)">Edit</a></li> -->
+                                </ul>
+                                }
                                 @if (msg?.chat?.isGroupChat && msg?.sender?._id !== currentUser._id) {
                                 <span class="mb-2">{{msg?.sender?.username}} :</span>
                                 <br>
@@ -254,8 +292,6 @@
             </div>
             }
         </div>
-
-
 
 
         <!-- Modal groupchat info -->
@@ -578,6 +614,6 @@
             </div>
         </div>
         }
-
+        
     </div>
 </div>
